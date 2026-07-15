@@ -1,0 +1,75 @@
+const express = require('express');
+const router = express.Router();
+const db = require('../config/db');
+const { authenticateAdmin } = require('../middleware/auth');
+const upload = require('../middleware/upload');
+
+router.get('/', async (req, res) => {
+  try {
+    const [committees] = await db.query('SELECT * FROM committees ORDER BY sort_order');
+    const [members] = await db.query('SELECT * FROM committee_members ORDER BY id');
+    const result = committees.map(c => ({
+      ...c,
+      members: members.filter(m => m.committee_id === c.id)
+    }));
+    res.json(result);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post('/', authenticateAdmin, upload.single('file'), async (req, res) => {
+  const { committee_name, description, sort_order } = req.body;
+  const file_url = req.file ? req.file.path : null;
+  try {
+    const [r] = await db.query('INSERT INTO committees (committee_name, description, file_url, sort_order) VALUES (?, ?, ?, ?)',
+      [committee_name, description, file_url, sort_order || 0]);
+    res.status(201).json({ id: r.insertId });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.put('/:id', authenticateAdmin, upload.single('file'), async (req, res) => {
+  const { committee_name, description, sort_order } = req.body;
+  const file_url = req.file ? req.file.path : undefined;
+  try {
+    const sets = ['committee_name=?','description=?','sort_order=?'];
+    const vals = [committee_name, description, sort_order || 0];
+    if (file_url) { sets.push('file_url=?'); vals.push(file_url); }
+    vals.push(req.params.id);
+    await db.query(`UPDATE committees SET ${sets.join(',')} WHERE id=?`, vals);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.delete('/:id', authenticateAdmin, async (req, res) => {
+  try {
+    await db.query('DELETE FROM committees WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Members
+router.post('/:committeeId/members', authenticateAdmin, async (req, res) => {
+  const { full_name, role, contact_no } = req.body;
+  try {
+    const [r] = await db.query('INSERT INTO committee_members (committee_id, full_name, role, contact_no) VALUES (?, ?, ?, ?)',
+      [req.params.committeeId, full_name, role, contact_no]);
+    res.status(201).json({ id: r.insertId });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.put('/members/:id', authenticateAdmin, async (req, res) => {
+  const { full_name, role, contact_no } = req.body;
+  try {
+    await db.query('UPDATE committee_members SET full_name=?, role=?, contact_no=? WHERE id=?',
+      [full_name, role, contact_no, req.params.id]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.delete('/members/:id', authenticateAdmin, async (req, res) => {
+  try {
+    await db.query('DELETE FROM committee_members WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+module.exports = router;

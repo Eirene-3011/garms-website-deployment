@@ -1,0 +1,183 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../../utils/api';
+import { getImageUrl } from '../../utils/helpers';
+import {
+  IconCompass,
+  IconTarget,
+  IconGem,
+  IconFlag,
+  IconClock,
+  IconLayers,
+  IconScroll,
+  IconUsers,
+  IconBuilding,
+  IconHash,
+  IconMapPin,
+  IconCalendar,
+  IconGlobe,
+  IconUser,
+} from '../../components/Icons';
+
+const SECTIONS = [
+  { key: 'vision', label: 'Vision', Icon: IconCompass },
+  { key: 'mission', label: 'Mission', Icon: IconTarget },
+  { key: 'core_values', label: 'Core Values', Icon: IconGem },
+  { key: 'goals', label: 'Goals & Objectives', Icon: IconFlag },
+  { key: 'history', label: 'School History', Icon: IconClock },
+];
+
+const SUB_PAGES = [
+  { label: 'Organizational Structure', path: '/about/organizational-structure', Icon: IconLayers, desc: 'School org chart and officials' },
+  { label: "Citizen's Charter", path: '/about/citizens-charter', Icon: IconScroll, desc: 'Our service standards per RA 11032' },
+  { label: 'Committees & Councils', path: '/about/committees', Icon: IconUsers, desc: 'PTA, SPTA, SSG, and more' },
+];
+
+export default function AboutPage() {
+  const [content, setContent] = useState({});
+  const [info, setInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      api.get('/content/about'),
+      api.get('/school-info'),
+    ]).then(([c, s]) => {
+      const map = {};
+      c.data.forEach(b => { map[b.section_key] = b; });
+      setContent(map);
+      setInfo(s.data);
+    }).catch(console.error).finally(() => setLoading(false));
+  }, []);
+
+  const infoRows = info ? [
+    { label: 'School Name', val: info.school_name, Icon: IconBuilding },
+    { label: 'School ID', val: info.school_id_no, mono: true, Icon: IconHash },
+    { label: 'School Type', val: info.school_type, badge: true, Icon: IconBuilding },
+    { label: 'Address', val: info.address, Icon: IconMapPin },
+    { label: 'Year Established', val: info.year_established, mono: true, Icon: IconCalendar },
+    { label: 'Division', val: info.district_division, Icon: IconLayers },
+    { label: 'Region', val: info.region, Icon: IconGlobe },
+    { label: 'School Head', val: `${info.principal_name}, ${info.principal_title}`, Icon: IconUser },
+  ] : [];
+
+  return (
+    <div>
+      {/* Hero */}
+      <div className="page-header">
+        <div className="container">
+          <div className="breadcrumb"><Link to="/">Home</Link> › About Us</div>
+          <h1>About GARMS</h1>
+          <p>Vision, Mission, Core Values, Goals &amp; History</p>
+        </div>
+      </div>
+
+      {/* School info tiles */}
+      <section className="section-sm surface-grid" style={{ background: 'var(--gray-50)' }}>
+        <div className="container">
+          {loading ? (
+            <div className="info-panel">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div className="info-tile" key={i}>
+                  <div className="skeleton" style={{ width: '50%', height: 10, marginBottom: 10 }} />
+                  <div className="skeleton" style={{ width: '80%', height: 14 }} />
+                </div>
+              ))}
+            </div>
+          ) : info && (
+            <div className="info-panel">
+              {infoRows.map(r => (
+                <div key={r.label} className="info-tile">
+                  <div className="info-tile-head">
+                    <span className="info-tile-icon"><r.Icon size={16} /></span>
+                    <p className="info-tile-label">{r.label}</p>
+                  </div>
+                  {r.badge ? (
+                    <span className="badge badge-red">{r.val || '—'}</span>
+                  ) : (
+                    <p className={`info-tile-value${r.mono ? ' font-mono' : ''}`}>{r.val || '—'}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Identity pillars — presented as a connected timeline, since these
+          five sections are parts of one whole (who the school is), not
+          a plain unordered list */}
+      <section className="section">
+        <div className="container">
+          <span className="section-eyebrow">Our Identity</span>
+          <h2 className="section-title">Who We Are</h2>
+          <p className="section-subtitle">
+            Five pillars that define GARMS as an institution — read in order, or jump to what matters to you.
+          </p>
+
+          {!loading && (
+            <nav className="pillar-nav" aria-label="Jump to section">
+              {SECTIONS.map(sec => (
+                <a key={sec.key} href={`#${sec.key}`} className="pillar-nav-link">
+                  <sec.Icon size={16} />
+                  <span>{sec.label}</span>
+                </a>
+              ))}
+            </nav>
+          )}
+
+          {loading ? (
+            <div style={{ maxWidth: 720 }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} style={{ marginBottom: 32 }}>
+                  <div className="skeleton" style={{ width: '30%', height: 20, marginBottom: 14 }} />
+                  <div className="skeleton" style={{ width: '100%', height: 60 }} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="timeline">
+              {SECTIONS.map(sec => (
+                <div key={sec.key} id={sec.key} className="timeline-item">
+                  <div className="timeline-node" aria-hidden="true">
+                    <sec.Icon size={22} />
+                  </div>
+                  <div className="timeline-content">
+                    <h2 className="timeline-title">{sec.label}</h2>
+                    <div
+                      className="rich-content card"
+                      style={{ padding: '24px 28px' }}
+                    >
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: content[sec.key]?.body_richtext || '<p><em>Content coming soon.</em></p>',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Sub-page links */}
+          <div className="divider-stitch" />
+          <div className="grid-auto">
+            {SUB_PAGES.map(l => (
+              <Link key={l.label} to={l.path} className="card subpage-card card-body">
+                <div className="subpage-icon" aria-hidden="true">
+                  <l.Icon size={22} />
+                </div>
+                <h3 className="subpage-title">
+                  {l.label}
+                  <span className="subpage-arrow">→</span>
+                </h3>
+                <p className="subpage-desc">{l.desc}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
