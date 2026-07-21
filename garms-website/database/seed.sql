@@ -1,7 +1,4 @@
--- ============================================================
--- GARMS Seed Data
--- ============================================================
-USE garms_db;
+
 
 -- Admin user (magic link only — no password)
 INSERT IGNORE INTO admin_users (username, email, role) VALUES ('admin', '107960@deped.gov.ph', 'super_admin');
@@ -182,6 +179,22 @@ INSERT IGNORE INTO faqs (question, answer_richtext, sort_order) VALUES
 ('Where is GARMS located?', '<p>GARMS is located at <strong>Brgy. Bagumbayan, General Trias City, Cavite</strong>. It is easily accessible and situated near the City Hall, local church, and commercial areas.</p>', 5),
 ('What programs and activities does GARMS offer?', '<p>GARMS offers the standard K-12 curriculum plus co-curricular activities including Intramurals, Reading Month/ARAL Program, Brigada Eskwela, Feeding Program, Environmental Programs, and civic activities honoring national heroes.</p>', 6),
 ('How can I submit feedback or concerns?', '<p>You may send your feedback or concerns through our Contact Us form on this website, or visit the school office during office hours.</p>', 7);
+
+-- BOSY Enrollment Statistics (SY 2024-2025, 2025-2026, 2026-2027)
+INSERT IGNORE INTO enrollment_stats
+  (school_year, sort_order,
+   kinder_male, kinder_female,
+   grade1_male, grade1_female,
+   grade2_male, grade2_female,
+   grade3_male, grade3_female,
+   grade4_male, grade4_female,
+   grade5_male, grade5_female,
+   grade6_male, grade6_female)
+VALUES
+  ('2024-2025', 1,  75, 80,  80,  65,  80,  84,  87, 109,  81, 88,  87, 82,  98, 86),
+  ('2025-2026', 2,  72, 96,  68,  84,  76,  68,  85,  89,  91,110,  81, 86,  86, 82),
+  ('2026-2027', 3,  48, 65,  77, 100,  68,  83,  73,  65,  89, 88, 105,105,  78, 88);
+-- Note: chart_image_url is NULL by default; upload via Admin → Enrollment Statistics after deploy.
 
 -- Calendar events
 INSERT IGNORE INTO calendar_events (event_name, start_date, end_date, is_recurring, category) VALUES

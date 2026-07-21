@@ -1,43 +1,52 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSchoolInfo } from '../../hooks/useSchoolInfo';
+import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
 import './Header.css';
 
 // Custom SVG Icons
-const LocationIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="icon">
-    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" />
-  </svg>
-);
-
-const PhoneIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="icon">
-    <path d="M20.01 15.38c-1.23 0-2.42-.18-3.53-.56-.35-.12-.74-.03-1.01.24l-2.17 2.17c-2.83-1.44-5.15-3.75-6.59-6.59l2.17-2.17c.27-.27.36-.66.24-1.01-.38-1.11-.56-2.3-.56-3.53 0-.55-.45-1-1-1H3.5c-.55 0-1 .45-1 1C2.5 13.91 10.09 21.5 19.5 21.5c.55 0 1-.45 1-1v-4.01c0-.55-.45-1-1-1z" />
-  </svg>
-);
-
-const EmailIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="icon">
-    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
-  </svg>
-);
-
-const ChevronDownIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="icon">
+const ChevronDownIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="icon" {...p}>
     <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
   </svg>
 );
 
-const SearchIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="icon">
-    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+const FacebookIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="social-icon" {...p}>
+    <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.51 1.49-3.9 3.77-3.9 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.89h2.78l-.45 2.91h-2.33V22c4.78-.76 8.44-4.92 8.44-9.94z" />
   </svg>
 );
 
-const CloseIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="icon">
-    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+const YoutubeIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="social-icon" {...p}>
+    <path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.55A3.02 3.02 0 0 0 .5 6.19 31.6 31.6 0 0 0 0 12a31.6 31.6 0 0 0 .5 5.81 3.02 3.02 0 0 0 2.12 2.14C4.5 20.5 12 20.5 12 20.5s7.5 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14A31.6 31.6 0 0 0 24 12a31.6 31.6 0 0 0-.5-5.81zM9.6 15.6V8.4l6.27 3.6-6.27 3.6z" />
+  </svg>
+);
+
+const SearchIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon" {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="M21 21l-4.35-4.35" />
+  </svg>
+);
+
+const CloseIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon" {...p}>
+    <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+);
+
+const PauseIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...p}>
+    <rect x="6" y="5" width="4" height="14" rx="1" />
+    <rect x="14" y="5" width="4" height="14" rx="1" />
+  </svg>
+);
+
+const PlayIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...p}>
+    <path d="M8 5v14l11-7z" />
   </svg>
 );
 
@@ -52,7 +61,13 @@ const NAV_ITEMS = [
       { label: 'Committees & Councils', path: '/about/committees' },
     ]
   },
-  { label: 'Admissions', path: '/admissions' },
+  {
+    label: 'Admissions', path: '/admissions',
+    children: [
+      { label: 'Enrollment Info', path: '/admissions' },
+      { label: 'Enrollment Statistics', path: '/admissions/enrollment-statistics' },
+    ]
+  },
   { label: 'PPAs', path: '/ppas' },
   {
     label: "Students' Corner", path: '/students-corner',
@@ -85,13 +100,44 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const { info } = useSchoolInfo();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [searchOpen, setSearchOpen] = useState(false); // New state for search overlay
-  const location = useLocation();
   const dropdownRef = useRef(null);
+
+  // Search overlay
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
+
+  // Banner carousel (moved over from HomePage — same data/behavior)
+  const [banners, setBanners] = useState([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
+  const [currentBanner, setCurrentBanner] = useState(0);
+  const [autoplay, setAutoplay] = useState(true);
+
+  useEffect(() => {
+    api.get('/banners')
+      .then(r => setBanners(r.data))
+      .catch(() => {})
+      .finally(() => setBannersLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (banners.length <= 1 || !autoplay) return;
+    const timer = setInterval(() => setCurrentBanner(p => (p + 1) % banners.length), 6000);
+    return () => clearInterval(timer);
+  }, [banners.length, autoplay]);
+
+  const goToBanner = useCallback((i) => {
+    setCurrentBanner(i);
+    setAutoplay(false);
+  }, []);
+
+  const banner = banners[currentBanner];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -102,7 +148,7 @@ export default function Header() {
   useEffect(() => {
     setMenuOpen(false);
     setActiveDropdown(null);
-    setSearchOpen(false); // Close search when navigating
+    setSearchOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -121,41 +167,78 @@ export default function Header() {
     }
   }, [searchOpen]);
 
-  const toggleSearch = () => {
-    setSearchOpen(!searchOpen);
-    if (menuOpen) setMenuOpen(false); // Close mobile menu if search is opened
-  };
+  const toggleMenu = () => setMenuOpen(!menuOpen);
 
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-    if (searchOpen) setSearchOpen(false); // Close search if mobile menu is opened
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    setSearchOpen(false);
+    navigate(`/search?q=${encodeURIComponent(q)}`);
   };
 
   return (
     <>
-      {/* Top bar */}
-      <div className="header-topbar">
-        <div className="container topbar-inner">
-          <span className="topbar-item" aria-label="School Location"><LocationIcon /> Brgy. Bagumbayan, General Trias City, Cavite</span>
-          <span className="topbar-item" aria-label="School Landline"><PhoneIcon /> {info?.landline || '(046) 472-5307'}</span>
-          <span className="topbar-item" aria-label="School Email"><EmailIcon /> {info?.email || '107960@deped.gov.ph'}</span>
-        </div>
+      {/* Hero banner strip — full width & full height, image shown in full (no crop) */}
+      <div className="header-hero">
+        {bannersLoading ? (
+          <div className="hero-banner-skeleton" aria-hidden="true" />
+        ) : banner ? (
+          <div
+            className="hero-banner-frame"
+            onMouseEnter={() => setAutoplay(false)}
+            onMouseLeave={() => setAutoplay(true)}
+          >
+            <img
+              src={getImageUrl(banner.image_url)}
+              alt={banner.title || ''}
+              className="hero-banner-img"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+
+            {banners.length > 1 && (
+              <div className="banner-controls">
+                <button
+                  type="button"
+                  className="banner-toggle"
+                  onClick={() => setAutoplay((a) => !a)}
+                  aria-label={autoplay ? 'Pause banner slideshow' : 'Play banner slideshow'}
+                  title={autoplay ? 'Pause' : 'Play'}
+                >
+                  {autoplay ? <PauseIcon className="banner-toggle-icon" /> : <PlayIcon className="banner-toggle-icon" />}
+                </button>
+                <div className="banner-dots" role="tablist" aria-label="Banner navigation">
+                  {banners.map((_, i) => (
+                    <button
+                      key={i}
+                      role="tab"
+                      aria-selected={i === currentBanner}
+                      aria-label={`Show banner ${i + 1}`}
+                      className={`dot${i === currentBanner ? ' active' : ''}`}
+                      onClick={() => goToBanner(i)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="hero-banner-fallback" aria-hidden="true" />
+        )}
+
+        <Link to="/" className="hero-brand" aria-label="Go to Home Page">
+          <img
+            src={getImageUrl(info?.logo_url) || '/uploads/logo.png'}
+            alt="GARMS Logo"
+            className="hero-logo"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+        </Link>
       </div>
 
-      {/* Brand bar */}
-      <div className="header-brand">
-        <div className="container brand-inner">
-          <Link to="/" className="brand-logo" aria-label="Go to Home Page">
-            <img src={getImageUrl(info?.logo_url) || '/uploads/logo.png'} alt="GARMS Logo" className="brand-img" onError={e => { e.target.style.display = 'none'; }} />
-            <div className="brand-text">
-              <span className="brand-name">General Artemio Ricarte Memorial School</span>
-              <span className="brand-sub">School ID: 107960 | Division of General Trias City | Region IV-A CALABARZON</span>
-            </div>
-          </Link>
-          <div className="brand-deped">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Department_of_Education_%28DepEd%29_of_the_Philippines.svg/200px-Department_of_Education_%28DepEd%29_of_the_Philippines.svg.png"
-              alt="DepEd Logo" className="deped-logo" onError={e => e.target.style.display='none'} />
-          </div>
+      {/* Social / portal utility bar */}
+      <div className="header-utility">
+        <div className="container utility-inner">
         </div>
       </div>
 
@@ -169,7 +252,7 @@ export default function Header() {
                 onMouseLeave={() => item.children && setActiveDropdown(null)}>
                 <Link to={item.path}
                   className={`nav-link${location.pathname === item.path || location.pathname.startsWith(item.path + '/') ? ' active' : ''}`}
-                  onClick={() => item.children ? null : toggleMenu()} // Close menu on item click
+                  onClick={() => item.children ? null : toggleMenu()}
                   aria-haspopup={item.children ? "true" : "false"}
                   aria-expanded={item.children && activeDropdown === item.label ? "true" : "false"}>
                   {item.label}
@@ -189,7 +272,7 @@ export default function Header() {
           </div>
 
           <div className="nav-actions">
-            <button className="search-button" onClick={toggleSearch} aria-label="Search">
+            <button className="search-button" onClick={() => setSearchOpen(true)} aria-label="Open search">
               <SearchIcon />
             </button>
             <button className={`hamburger${menuOpen ? ' open' : ''}`} onClick={toggleMenu} aria-label="Toggle navigation menu">
@@ -203,22 +286,21 @@ export default function Header() {
       {menuOpen && <div className="mobile-menu-overlay" onClick={toggleMenu}></div>}
 
       {/* Search Overlay */}
-      {searchOpen && (
-        <div className="search-overlay">
-          <div className="search-container">
-            <input
-              type="text"
-              placeholder="Search..."
-              className="search-input"
-              ref={searchInputRef}
-              aria-label="Search input field"
-            />
-            <button className="search-overlay-close" onClick={toggleSearch} aria-label="Close search">
-              <CloseIcon />
-            </button>
-          </div>
-        </div>
-      )}
+      <div className={`search-overlay${searchOpen ? ' open' : ''}`} role="dialog" aria-hidden={!searchOpen}>
+        <form className="search-container" onSubmit={handleSearchSubmit}>
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="search-input"
+            placeholder="Search the site..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button type="button" className="search-overlay-close" onClick={() => setSearchOpen(false)} aria-label="Close search">
+            <CloseIcon />
+          </button>
+        </form>
+      </div>
     </>
   );
 }

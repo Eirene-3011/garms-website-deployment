@@ -1,6 +1,7 @@
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
+const path = require('path');
 
 // Configure Cloudinary from environment variables
 cloudinary.config({
@@ -24,10 +25,23 @@ const storage = new CloudinaryStorage({
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ];
     const isDoc = docMimes.includes(file.mimetype);
+
+    // Build a safe, human-readable public_id that preserves the original filename
+    const ext = path.extname(file.originalname); // e.g. ".pdf"
+    const baseName = path
+      .basename(file.originalname, ext)
+      .replace(/[^a-zA-Z0-9_-]/g, '_') // strip spaces/special chars
+      .slice(0, 80); // keep it reasonably short
+    const uniqueSuffix = Date.now(); // avoid overwriting files with the same name
+
     return {
       folder: 'garms-uploads',
       resource_type: isDoc ? 'raw' : 'image',
       allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xlsx', 'xls'],
+      // 'raw' files (PDF/Word/Excel) need the extension baked into public_id,
+      // since Cloudinary does NOT auto-append it for raw resource types.
+      // Images get their format handled automatically, so we omit ext there.
+      public_id: `${baseName}_${uniqueSuffix}${isDoc ? ext : ''}`,
       // Automatically transform images on upload for web optimisation
       ...(isDoc ? {} : { transformation: [{ quality: 'auto', fetch_format: 'auto' }] }),
     };

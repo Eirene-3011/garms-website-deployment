@@ -53,6 +53,7 @@ app.use('/api/charter',                        require('./routes/charter'));
 app.use('/api/photos',                         require('./routes/photos'));
 app.use('/api/internal-forms',                 require('./routes/internalForms'));
 app.use('/api/upload',                         require('./routes/upload'));
+app.use('/api/enrollment-stats',               require('./routes/enrollmentStats'));
 app.use('/api/feedback',                       require('./routes/feedback'));
 
 // Health check

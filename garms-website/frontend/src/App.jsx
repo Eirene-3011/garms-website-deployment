@@ -11,6 +11,7 @@ import OrgStructurePage from './pages/public/OrgStructurePage';
 import CitizensCharterPage from './pages/public/CitizensCharterPage';
 import CommitteesPage from './pages/public/CommitteesPage';
 import AdmissionsPage from './pages/public/AdmissionsPage';
+import EnrollmentStatisticsPage from './pages/public/EnrollmentStatisticsPage';
 import PPAsPage from './pages/public/PPAsPage';
 import StudentsCornerPage from './pages/public/StudentsCornerPage';
 import LearningResourcesPage from './pages/public/LearningResourcesPage';
@@ -44,6 +45,7 @@ import AdminPhotos from './pages/admin/AdminPhotos';
 import AdminOrgChart from './pages/admin/AdminOrgChart';
 import AdminFeedback from './pages/admin/AdminFeedback';
 import AdminExternalLinks from './pages/admin/AdminExternalLinks';
+import AdminEnrollmentStats from './pages/admin/AdminEnrollmentStats';
 import RequireAuth from './components/admin/RequireAuth';
 
 export default function App() {
@@ -59,6 +61,7 @@ export default function App() {
           <Route path="/about/citizens-charter" element={<CitizensCharterPage />} />
           <Route path="/about/committees" element={<CommitteesPage />} />
           <Route path="/admissions" element={<AdmissionsPage />} />
+          <Route path="/admissions/enrollment-statistics" element={<EnrollmentStatisticsPage />} />
           <Route path="/ppas" element={<PPAsPage />} />
           <Route path="/students-corner" element={<StudentsCornerPage />} />
           <Route path="/learning-resources" element={<LearningResourcesPage />} />
@@ -91,6 +94,7 @@ export default function App() {
           <Route path="calendar" element={<AdminCalendar />} />
           <Route path="contact" element={<AdminContact />} />
           <Route path="enrollment" element={<AdminEnrollment />} />
+          <Route path="enrollment-stats" element={<AdminEnrollmentStats />} />
           <Route path="charter" element={<AdminCharter />} />
           <Route path="photos" element={<AdminPhotos />} />
           <Route path="feedback" element={<AdminFeedback />} />

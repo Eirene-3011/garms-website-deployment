@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { getImageUrl, formatDateShort } from '../../utils/helpers';
@@ -72,31 +72,9 @@ const Icon = {
       <path d="M6 9l6 6 6-6" />
     </svg>
   ),
-  Pause: (p) => (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...p}>
-      <rect x="6" y="5" width="4" height="14" rx="1" />
-      <rect x="14" y="5" width="4" height="14" rx="1" />
-    </svg>
-  ),
-  Play: (p) => (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...p}>
-      <path d="M8 5v14l11-7z" />
-    </svg>
-  ),
   Quote: (p) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...p}>
       <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 0 1-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 0 1-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z" />
-    </svg>
-  ),
-  MapPin: (p) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
-  ),
-  Sparkles: (p) => (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...p}>
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
   ),
   CheckCircle: (p) => (
@@ -119,11 +97,6 @@ const Icon = {
       <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.11" />
     </svg>
   ),
-  Zap: (p) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-    </svg>
-  ),
   Heart: (p) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...p}>
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -142,13 +115,25 @@ const Icon = {
       <line x1="4" y1="22" x2="4" y2="15" />
     </svg>
   ),
+  Enrollment: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M16 11l2 2 4-4" />
+    </svg>
+  ),
+  Sparkle: (p) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...p}>
+      <path d="M12 2l1.8 5.7L19.5 9.5l-5.7 1.8L12 17l-1.8-5.7L4.5 9.5l5.7-1.8z" />
+    </svg>
+  ),
 };
 
 /* ================================================================
    Scroll-reveal hook — adds a class once a section enters view
    ================================================================ */
 function useReveal() {
-  const ref = useRef(null);
+  const ref = React.useRef(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -197,18 +182,15 @@ function formatEventDate(dateString) {
 }
 
 export default function HomePage() {
-  const [banners, setBanners] = useState([]);
   const [info, setInfo] = useState(null);
   const [content, setContent] = useState({});
   const [faqs, setFaqs] = useState([]);
   const [events, setEvents] = useState([]);
-  const [currentBanner, setCurrentBanner] = useState(0);
-  const [autoplay, setAutoplay] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [enrollStat, setEnrollStat] = useState(null);
 
   useEffect(() => {
     Promise.allSettled([
-      api.get('/banners').then(r => setBanners(r.data)),
       api.get('/school-info').then(r => setInfo(r.data)),
       api.get('/content/about').then(r => {
         const map = {};
@@ -218,23 +200,14 @@ export default function HomePage() {
       api.get('/faqs').then(r => setFaqs(r.data.slice(0, 4))),
       api.get('/calendar').then(r => setEvents(r.data.slice(0, 5))),
     ]).finally(() => setLoading(false));
+    // Non-critical: fetch latest enrollment total for stats bar
+    api.get('/enrollment-stats').then(r => {
+      if (r.data && r.data.length) setEnrollStat(r.data[0]); // newest first (sort_order DESC)
+    }).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (banners.length <= 1 || !autoplay) return;
-    const timer = setInterval(() => setCurrentBanner(p => (p + 1) % banners.length), 6000);
-    return () => clearInterval(timer);
-  }, [banners.length, autoplay]);
-
-  const goToBanner = useCallback((i) => {
-    setCurrentBanner(i);
-    setAutoplay(false);
-  }, []);
-
-  const banner = banners[currentBanner];
 
   const quickLinks = [
-    { Icon: Icon.Admissions, label: 'Admissions', desc: 'Enrollment requirements and process', path: '/admissions', color: 'accent-red' },
+    { Icon: Icon.Admissions, label: 'Admissions', desc: 'See enrollment requirements, deadlines, and how to apply for the coming school year.', path: '/admissions', color: 'accent-red', badge: 'Start here' },
     { Icon: Icon.Faculty, label: 'Faculty & Staff', desc: 'Meet our dedicated teachers', path: '/faculty-staff', color: 'accent-blue' },
     { Icon: Icon.Resources, label: 'Learning Resources', desc: 'ARAL and supplementary materials', path: '/learning-resources', color: 'accent-green' },
     { Icon: Icon.Calendar, label: 'School Calendar', desc: 'Important dates and events', path: '/school-calendar', color: 'accent-purple' },
@@ -247,6 +220,11 @@ export default function HomePage() {
     { num: 'K–6', label: 'Grade Levels', icon: Icon.CheckCircle },
     { num: '1:35', label: 'Teacher–Pupil Ratio', icon: Icon.Users },
     { num: '35+', label: 'Teaching Personnel', icon: Icon.Users },
+    {
+      num: enrollStat ? Number(enrollStat.grand_total).toLocaleString() : '—',
+      label: enrollStat ? `Enrolled (SY ${enrollStat.school_year})` : 'Total Enrolled',
+      icon: Icon.Enrollment,
+    },
   ];
 
   const coreValues = [
@@ -278,103 +256,12 @@ export default function HomePage() {
 
   // Filter events with valid dates
   const validEvents = events.filter(event => formatEventDate(event.date));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   return (
     <div className="homepage">
-      {/* Hero Banner Section */}
-      <section className="hero-section">
-        {loading ? (
-          <div className="hero-banner hero-skeleton" aria-hidden="true" />
-        ) : banner ? (
-          <div
-            className="hero-banner"
-            style={{ backgroundImage: `url(${getImageUrl(banner.image_url)})` }}
-            onMouseEnter={() => setAutoplay(false)}
-            onMouseLeave={() => setAutoplay(true)}
-          >
-            <div className="hero-overlay" />
-            <div className="hero-content container">
-              <img
-                src={getImageUrl(info?.logo_url) || '/uploads/logo.png'}
-                alt="GARMS Logo"
-                className="hero-logo"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-              <div className="hero-text">
-                <p className="hero-tagline">
-                  <Icon.Sparkles className="tagline-icon" />
-                  GARMS Sa Tatag, GARMS Sa Kalidad!
-                </p>
-                <h1 className="hero-title">
-                  {info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}
-                </h1>
-                <p className="hero-sub">{info?.school_name || 'General Artemio Ricarte Memorial School'}</p>
-                <div className="hero-actions">
-                  <Link to="/about" className="btn btn-primary btn-lg">
-                    Discover GARMS <Icon.ArrowRight className="btn-icon" />
-                  </Link>
-                  <Link to="/admissions" className="btn btn-outline hero-btn-outline btn-lg">
-                    Enroll Now
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {banners.length > 1 && (
-              <div className="banner-controls">
-                <button
-                  type="button"
-                  className="banner-toggle"
-                  onClick={() => setAutoplay((a) => !a)}
-                  aria-label={autoplay ? 'Pause banner slideshow' : 'Play banner slideshow'}
-                  title={autoplay ? 'Pause' : 'Play'}
-                >
-                  {autoplay ? <Icon.Pause className="banner-toggle-icon" /> : <Icon.Play className="banner-toggle-icon" />}
-                </button>
-                <div className="banner-dots" role="tablist" aria-label="Banner navigation">
-                  {banners.map((_, i) => (
-                    <button
-                      key={i}
-                      role="tab"
-                      aria-selected={i === currentBanner}
-                      aria-label={`Show banner ${i + 1}`}
-                      className={`dot${i === currentBanner ? ' active' : ''}`}
-                      onClick={() => goToBanner(i)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="hero-banner hero-fallback">
-            <div className="hero-overlay" />
-            <div className="hero-pattern" aria-hidden="true" />
-            <div className="hero-content container">
-              <div className="hero-text">
-                <p className="hero-tagline">
-                  <Icon.Sparkles className="tagline-icon" />
-                  GARMS Sa Tatag, GARMS Sa Kalidad!
-                </p>
-                <h1 className="hero-title">
-                  {info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}
-                </h1>
-                <p className="hero-sub">{info?.school_name || 'General Artemio Ricarte Memorial School'}</p>
-                <div className="hero-actions">
-                  <Link to="/about" className="btn btn-primary btn-lg">
-                    Discover GARMS <Icon.ArrowRight className="btn-icon" />
-                  </Link>
-                  <Link to="/admissions" className="btn btn-outline hero-btn-outline btn-lg">
-                    Enroll Now
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Enhanced Stats Bar with Icons */}
+      {/* Stats Bar */}
       <section className="stats-bar">
         <div className="container stats-grid">
           {stats.map((s) => (
@@ -389,13 +276,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Quick Links Section */}
+      {/* Quick Links Section — bento layout, Admissions featured */}
       <section className="section quick-links-section">
         <div className="container">
-          <Reveal as="div">
-           <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-  <p className="section-eyebrow">Explore GARMS</p>
-</div>
+          <Reveal as="div" className="text-center section-head">
+            <p className="section-eyebrow">Find your way around</p>
+            <h2 className="section-title">Explore <span className="accent-text">GARMS</span></h2>
           </Reveal>
           <div className="quick-links-grid">
             {quickLinks.map((l, idx) => (
@@ -403,9 +289,10 @@ export default function HomePage() {
                 as={Link}
                 to={l.path}
                 key={l.label}
-                className={`quick-link-card ${l.color}`}
+                className={`quick-link-card ${l.color}${idx === 0 ? ' featured' : ''}`}
                 style={{ transitionDelay: `${idx * 60}ms` }}
               >
+                {l.badge && <span className="ql-badge">{l.badge}</span>}
                 <span className="ql-icon-wrap">
                   <l.Icon className="ql-icon" />
                 </span>
@@ -420,54 +307,55 @@ export default function HomePage() {
         </div>
       </section>
 
-     {/* Vision & Mission Section */}
-<section className="section vm-section">
-  <div className="container">
-    <Reveal as="div" className="text-center">
-      <p className="section-eyebrow">Who We Are</p>
-      <h2 className="section-title">Vision & Mission</h2>
-    </Reveal>
+      {/* Vision & Mission Section */}
+      <section className="section vm-section">
+        <div className="container">
+          <Reveal as="div" className="text-center section-head">
+            <p className="section-eyebrow">Who we are</p>
+            <h2 className="section-title">Vision &amp; <span className="accent-text">Mission</span></h2>
+          </Reveal>
 
-    <div className="vm-grid">
-      <Reveal className="vm-card vm-vision">
-        <div className="vm-icon-wrap">
-          <Icon.Vision className="vm-icon" />
-        </div>
-        <h3>Our Vision</h3>
-        <span className="vm-divider" />
-        <div
-          className="rich-content"
-          dangerouslySetInnerHTML={{
-            __html:
-              content.vision?.body_richtext ||
-              '<p>We dream of Filipinos who passionately love their country and whose values and competencies enable them to realize their full potential and contribute meaningfully to building the nation.</p>',
-          }}
-        />
-      </Reveal>
+          <div className="vm-grid">
+            <Reveal className="vm-card vm-vision">
+              <Icon.Quote className="vm-quote-mark" />
+              <div className="vm-icon-wrap">
+                <Icon.Vision className="vm-icon" />
+              </div>
+              <h3>Our Vision</h3>
+              <span className="vm-divider" />
+              <div
+                className="rich-content"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    content.vision?.body_richtext ||
+                    '<p>We dream of Filipinos who passionately love their country and whose values and competencies enable them to realize their full potential and contribute meaningfully to building the nation.</p>',
+                }}
+              />
+            </Reveal>
 
-      <Reveal className="vm-card vm-mission" style={{ transitionDelay: '90ms' }}>
-        <div className="vm-icon-wrap">
-          <Icon.Mission className="vm-icon" />
-        </div>
-        <h3>Our Mission</h3>
-        <span className="vm-divider" />
-        <div
-          className="rich-content"
-          dangerouslySetInnerHTML={{
-            __html:
-              content.mission?.body_richtext ||
-              '<p>To provide quality, accessible, and relevant basic education to all Filipinos using flexible and alternative delivery modes to develop their potential as individuals and as members of the community and nation.</p>',
-          }}
-        />
-      </Reveal>
-    </div>
+            <Reveal className="vm-card vm-mission" style={{ transitionDelay: '90ms' }}>
+              <Icon.Quote className="vm-quote-mark" />
+              <div className="vm-icon-wrap">
+                <Icon.Mission className="vm-icon" />
+              </div>
+              <h3>Our Mission</h3>
+              <span className="vm-divider" />
+              <div
+                className="rich-content"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    content.mission?.body_richtext ||
+                    '<p>To provide quality, accessible, and relevant basic education to all Filipinos using flexible and alternative delivery modes to develop their potential as individuals and as members of the community and nation.</p>',
+                }}
+              />
+            </Reveal>
+          </div>
 
-    {/* Core Values stays exactly as-is below this */}
-
-          {/* Enhanced Core Values Section — New Card-Based Layout */}
+          {/* Core Values */}
           <Reveal className="core-values-section">
             <div className="core-values-header">
-              <h3 className="core-values-title">Core Values</h3>
+              <p className="section-eyebrow">What guides us</p>
+              <h3 className="core-values-title">Core <span className="accent-text">Values</span></h3>
               <p className="core-values-subtitle">
                 GARMS instills these core values through daily classroom interactions, co-curricular activities, flag ceremonies, and community outreach.
               </p>
@@ -517,35 +405,40 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Events Section */}
+      {/* Events Section — vertical timeline */}
       {validEvents.length > 0 && (
         <section className="section events-section">
           <div className="container">
-            <Reveal as="div">
+            <Reveal as="div" className="section-head">
               <p className="section-eyebrow">Calendar</p>
-              <h2 className="section-title">Upcoming Events</h2>
+              <h2 className="section-title">Upcoming <span className="accent-text">Events</span></h2>
               <p className="section-subtitle">Mark your calendars for important school activities</p>
             </Reveal>
-            <div className="events-list">
+            <div className="events-timeline">
               {validEvents.map((event, idx) => {
                 const eventDate = formatEventDate(event.date);
                 if (!eventDate) return null;
-                
+
                 const month = eventDate.toLocaleDateString('en-US', { month: 'short' });
                 const day = eventDate.getDate();
-                
+                const isSoonest = idx === 0 && eventDate >= today;
+
                 return (
                   <Reveal
                     key={event.id}
-                    className="event-item"
+                    className={`event-item${isSoonest ? ' is-next' : ''}`}
                     style={{ transitionDelay: `${idx * 50}ms` }}
                   >
                     <div className="event-date-box">
                       <div className="event-month">{month}</div>
                       <div className="event-day">{day}</div>
                     </div>
+                    <div className="event-node" aria-hidden="true" />
                     <div className="event-details">
-                      <div className="event-name">{event.title}</div>
+                      <div className="event-name">
+                        {event.title}
+                        {isSoonest && <span className="event-tag">Up next</span>}
+                      </div>
                       <div className="event-range">
                         <Icon.Calendar className="event-icon" />
                         {formatDateShort(event.date) || event.date}
@@ -565,6 +458,7 @@ export default function HomePage() {
         <div className="container">
           <div className="cta-inner">
             <div className="cta-text">
+              <span className="cta-eyebrow"><Icon.Sparkle className="cta-eyebrow-icon" /> Admissions open</span>
               <h2>Ready to Join GARMS?</h2>
               <p>Start your journey towards academic excellence and personal growth with our dedicated faculty and comprehensive learning programs.</p>
             </div>

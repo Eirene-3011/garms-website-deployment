@@ -13,6 +13,7 @@ const MENU = [
   { path: '/admin/staff', label: 'Faculty & Staff', icon: '👨‍🏫' },
   { path: '/admin/committees', label: 'Committees', icon: '👥' },
   { path: '/admin/enrollment', label: 'Admissions', icon: '📋' },
+  { path: '/admin/enrollment-stats', label: 'Enrollment Statistics', icon: '📈' },
   { path: '/admin/ppas', label: 'Programs (PPAs)', icon: '🎓' },
   { path: '/admin/students', label: "Students' Corner", icon: '⭐' },
   { path: '/admin/resources', label: 'Learning Resources', icon: '📚' },

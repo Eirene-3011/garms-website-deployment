@@ -1,18 +1,23 @@
-/* Variables for consistent styling */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* Variables for consistent styling — refined institutional palette
+   (maroon + gold echo the school seal's own colors) */
 :root {
-  --red-dark: #8B0000;
-  --red-primary: #B22222;
-  --red-light: #CD5C5C;
-  --red-pale: #F08080;
+  --red-dark: #5c0f1a;
+  --red-primary: #8f1626;
+  --red-light: #b3495a;
+  --red-pale: #e9a5ae;
+  --gold: #c9a227;
   --white: #ffffff;
   --gray-100: #f7f7f7;
   --gray-500: #6b7280;
   --gray-700: #374151;
-  --font-sans: 'Poppins', sans-serif; /* Changed font to Poppins for a modern look */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
   --transition: all 0.3s ease-in-out;
   --radius-md: 8px;
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --glass-bg: rgba(255, 255, 255, 0.15); /* Glassmorphism background */
+  --glass-bg: rgba(255, 255, 255, 0.15);
   --glass-border: rgba(255, 255, 255, 0.2);
 }
 
@@ -33,101 +38,220 @@ body {
 
 /* Custom SVG Icon Styling */
 .icon {
-  width: 1em; /* Adjust size relative to font-size */
+  width: 1em;
   height: 1em;
-  vertical-align: -0.125em; /* Align with text */
+  vertical-align: -0.125em;
   fill: currentColor;
 }
 
-/* Header Top Bar */
-.header-topbar {
+/* ===================================================================
+   Hero banner strip — full-width, uncropped banner image.
+   Sized by aspect-ratio (not a short fixed clamp) so the entire
+   uploaded banner — including any text baked into it — is always
+   visible in full, never cropped top/bottom.
+   =================================================================== */
+.header-hero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 5;
+  max-height: 560px;
   background: var(--red-dark);
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 0.78rem;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
 }
 
-.topbar-inner {
+.hero-banner-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.hero-banner-skeleton,
+.hero-banner-fallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(115deg, var(--red-dark) 0%, var(--red-primary) 100%);
+}
+
+.hero-banner-skeleton {
+  animation: heroPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes heroPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Scalloped seal-edge transition beneath the banner — echoes the
+   scalloped border of the school seal in the logo above it. */
+.header-hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 18px;
+  z-index: 4;
+  background: var(--red-dark);
+  -webkit-mask-image: radial-gradient(circle at 9px 0, transparent 9px, #000 9.5px);
+  mask-image: radial-gradient(circle at 9px 0, transparent 9px, #000 9.5px);
+  -webkit-mask-size: 18px 18px;
+  mask-size: 18px 18px;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+}
+
+/* Logo overlaid on top of the banner */
+.hero-brand {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  z-index: 5;
   display: flex;
-  justify-content: flex-end; /* Align items to the right */
-  gap: 30px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.topbar-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.topbar-item .icon {
-  color: var(--red-pale);
-  font-size: 0.9rem;
-}
-
-/* Header Brand Section */
-.header-brand {
-  background: var(--white);
-  padding: 18px 0;
-  border-bottom: 3px solid var(--red-primary);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-}
-
-.brand-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.brand-logo {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   text-decoration: none;
-  color: inherit;
 }
 
-.brand-img {
-  width: 80px;
-  height: 80px;
+.hero-logo {
+  width: 84px;
+  height: 84px;
   object-fit: contain;
-  flex-shrink: 0;
-  border-radius: 50%; /* Make logo circular */
-  box-shadow: 0 0 0 3px var(--red-pale);
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 0 0 3px var(--red-pale), 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-.brand-text {
+.banner-controls {
+  position: absolute;
+  right: 16px;
+  bottom: 22px;
+  z-index: 5;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
-.brand-name {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--red-primary);
-  line-height: 1.2;
-  font-family: var(--font-sans);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.banner-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
 }
 
-.brand-sub {
-  font-size: 0.75rem;
-  color: var(--gray-500);
-  margin-top: 4px;
-  line-height: 1.4;
+.banner-toggle:hover {
+  background: rgba(0, 0, 0, 0.65);
 }
 
-.deped-logo {
-  height: 60px;
-  object-fit: contain;
-  opacity: 0.9;
+.banner-toggle-icon {
+  width: 13px;
+  height: 13px;
 }
 
-/* Main Navigation */
+.banner-dots {
+  display: flex;
+  gap: 7px;
+}
+
+.banner-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0;
+  transition: var(--transition);
+}
+
+.banner-dots .dot.active {
+  background: var(--white);
+  transform: scale(1.2);
+}
+
+/* ===================================================================
+   Social / portal utility bar
+   =================================================================== */
+.header-utility {
+  background: var(--red-dark);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 3;
+}
+
+.utility-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.utility-social {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: auto;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--white);
+  transition: var(--transition);
+}
+
+.social-link:hover {
+  background: var(--gold);
+  color: var(--red-dark);
+  transform: translateY(-1px);
+}
+
+.social-icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.portal-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 18px;
+  background: var(--gold);
+  color: var(--red-dark);
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: var(--radius-md);
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.portal-btn:hover {
+  filter: brightness(1.08);
+}
+
+/* ===================================================================
+   Main Navigation
+   =================================================================== */
 .navbar {
   background: var(--red-primary);
   position: sticky;
@@ -138,14 +262,14 @@ body {
 
 .navbar-sticky {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  background: var(--red-dark); /* Darker background when sticky */
+  background: var(--red-dark);
 }
 
 .nav-inner {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  height: 56px; /* Fixed height for navbar */
+  height: 56px;
 }
 
 .nav-menu {
@@ -165,20 +289,32 @@ body {
   gap: 6px;
   padding: 0 18px;
   height: 100%;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.98);
   text-decoration: none;
   white-space: nowrap;
   transition: var(--transition);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
 }
 
 .nav-link:hover,
 .nav-link.active {
   background: rgba(0, 0, 0, 0.25);
   color: var(--white);
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 6px;
+  height: 2px;
+  background: var(--gold);
 }
 
 .nav-caret {
@@ -232,8 +368,8 @@ body {
 
 .dropdown-item:hover {
   background: var(--red-pale);
-  color: var(--red-primary);
-  padding-left: 25px; /* Slight indent on hover */
+  color: var(--red-dark);
+  padding-left: 25px;
 }
 
 /* Nav Actions (Search and Hamburger) */
@@ -260,7 +396,7 @@ body {
 }
 
 .search-button:hover {
-  color: var(--red-pale);
+  color: var(--gold);
   transform: scale(1.1);
 }
 
@@ -269,12 +405,15 @@ body {
   display: none;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   gap: 6px;
   background: none;
   border: none;
   cursor: pointer;
   padding: 10px;
   z-index: 1002;
+  width: 44px;
+  height: 44px;
 }
 
 .hamburger span {
@@ -305,9 +444,9 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* Dark overlay */
+  background: rgba(0, 0, 0, 0.5);
   z-index: 998;
-  display: none; /* Hidden by default, shown by JS */
+  display: block;
 }
 
 /* Search Overlay */
@@ -317,8 +456,8 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8); /* Darker overlay for search */
-  backdrop-filter: blur(10px); /* Glassmorphism effect */
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   z-index: 1003;
   display: flex;
@@ -364,7 +503,7 @@ body {
 }
 
 .search-input:focus {
-  border-color: var(--red-pale);
+  border-color: var(--gold);
   background: rgba(255, 255, 255, 0.2);
 }
 
@@ -386,65 +525,50 @@ body {
 }
 
 .search-overlay-close:hover {
-  color: var(--red-pale);
+  color: var(--gold);
   transform: rotate(90deg);
 }
 
-/* Responsive Adjustments */
+/* ===================================================================
+   Responsive Adjustments
+   =================================================================== */
 @media (max-width: 1024px) {
-  .brand-name {
-    font-size: 1.1rem;
-  }
-  .brand-sub {
-    font-size: 0.7rem;
-  }
-  .deped-logo {
-    height: 50px;
-  }
   .nav-link {
     padding: 0 14px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 }
 
 @media (max-width: 900px) {
-  .topbar-inner {
-    justify-content: center;
-    gap: 15px;
+  .header-hero {
+    aspect-ratio: 4 / 3;
+    max-height: 420px;
   }
-  .header-topbar {
-    font-size: 0.7rem;
-  }
-  .brand-inner {
-    flex-direction: column;
-    text-align: center;
-    gap: 10px;
-  }
-  .brand-logo {
-    flex-direction: column;
-    gap: 8px;
-  }
-  .brand-img {
+  .hero-logo {
     width: 60px;
     height: 60px;
   }
-  .brand-name {
-    font-size: 1rem;
+  .hero-brand {
+    top: 10px;
+    left: 12px;
   }
-  .brand-sub {
-    font-size: 0.65rem;
+  .banner-controls {
+    right: 10px;
+    bottom: 20px;
   }
-  .deped-logo {
-    height: 45px;
+
+  .utility-inner {
+    justify-content: space-between;
   }
 
   .hamburger { display: flex; }
+
   .nav-menu {
-    display: none;
-    position: fixed; /* Use fixed for mobile drawer */
+    display: flex;
+    position: fixed;
     top: 0;
-    right: -300px; /* Hidden off-screen */
-    width: 280px; /* Fixed width for mobile menu */
+    right: -300px;
+    width: 280px;
     height: 100%;
     background: var(--red-dark);
     flex-direction: column;
@@ -452,16 +576,15 @@ body {
     z-index: 999;
     box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
     transition: right 0.3s ease-in-out;
-    overflow-y: auto; /* Enable scrolling for long menus */
+    overflow-y: auto;
   }
   .nav-menu.open {
-    right: 0; /* Slide in */
-  }
-  .mobile-menu-overlay.open {
-    display: block;
+    right: 0;
   }
   .nav-item {
     width: 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
   .nav-link {
     height: auto;
@@ -472,6 +595,9 @@ body {
   }
   .nav-link:hover, .nav-link.active {
     background: rgba(255, 255, 255, 0.1);
+  }
+  .nav-link.active::after {
+    display: none;
   }
   .nav-dropdown {
     position: static;
@@ -499,5 +625,12 @@ body {
   }
   .dropdown-item:last-child {
     border-bottom: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-hero {
+    aspect-ratio: 1 / 1;
+    max-height: 380px;
   }
 }
