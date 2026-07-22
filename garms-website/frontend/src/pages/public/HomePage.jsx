@@ -97,6 +97,11 @@ const SparkleIcon = (p) => (
     <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z" />
   </svg>
 );
+const BookOpenIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
 
 const QUICK_LINKS = [
   { label: 'About GARMS', desc: 'School profile & history', path: '/about', Icon: SchoolIcon, accent: 'red' },
@@ -129,7 +134,14 @@ export default function HomePage() {
     api.get('/school-info').then(r => setInfo(r.data)).catch(() => {});
     api.get('/school-dashboard').then(r => setDashboard(r.data)).catch(() => {}).finally(() => setLoadingDash(false));
     api.get('/ppas').then(r => setPpas(r.data.slice(0, 3))).catch(() => {});
-    api.get('/banners').then(r => setBanners(r.data)).catch(() => {}).finally(() => setBannersLoading(false));
+    // Fetch only seasonal banners — exclude general banners
+    api.get('/banners')
+      .then(r => {
+        const seasonal = (r.data || []).filter(b => b.type !== 'general');
+        setBanners(seasonal);
+      })
+      .catch(() => {})
+      .finally(() => setBannersLoading(false));
   }, []);
 
   useEffect(() => {
@@ -153,13 +165,17 @@ export default function HomePage() {
     { label: 'Performance Indicator', value: dashStats.performance_indicator || '—', small: true },
   ];
 
+  const hasBanners = banners.length > 0;
+
   return (
     <div className="homepage">
-      {/* Hero Slideshow */}
-      <section className="hero-slideshow" onMouseEnter={() => setAutoplay(false)} onMouseLeave={() => setAutoplay(true)}>
+      {/* ============================================================
+          Hero — Seasonal Slideshow Only (general banner excluded)
+          ============================================================ */}
+      <section className="hero-slideshow" onMouseEnter={() => banners.length > 1 && setAutoplay(false)} onMouseLeave={() => banners.length > 1 && setAutoplay(true)}>
         {bannersLoading ? (
           <div className="hero-skeleton" aria-hidden="true" />
-        ) : banner ? (
+        ) : hasBanners && banner ? (
           <>
             <div className="hero-slide-track">
               {banners.map((b, i) => (
@@ -203,10 +219,13 @@ export default function HomePage() {
             )}
           </>
         ) : (
+          /* Fallback when no seasonal banners — gradient hero with school info */
           <div className="hero-fallback" aria-hidden="true">
+            <div className="hero-fallback-pattern" />
             <div className="hero-overlay-content container">
               {info?.logo_url && <img src={getImageUrl(info.logo_url)} alt="GARMS Logo" className="hero-logo" onError={e => e.target.style.display = 'none'} />}
               <div className="hero-text-block">
+                <span className="hero-eyebrow"><SparkleIcon className="hero-eyebrow-icon" />Welcome to GARMS</span>
                 <h1 className="hero-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
                 <p className="hero-subtitle">{info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}</p>
                 <div className="hero-actions">
@@ -219,11 +238,13 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* School Dashboard */}
+      {/* ============================================================
+          School Dashboard
+          ============================================================ */}
       <section className="section dashboard-section">
         <div className="container">
           <div className="section-header">
-            <span className="section-eyebrow">By the Numbers</span>
+            <span className="section-eyebrow"><BookOpenIcon className="section-eyebrow-icon" />By the Numbers</span>
             <h2 className="section-title">School Dashboard</h2>
             <p className="section-subtitle">Key statistics and performance indicators for the current school year.</p>
           </div>
@@ -273,11 +294,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Quick Access */}
+      {/* ============================================================
+          Quick Access
+          ============================================================ */}
       <section className="section quick-links-section">
         <div className="container">
           <div className="section-header">
-            <span className="section-eyebrow">Navigate</span>
+            <span className="section-eyebrow"><BookOpenIcon className="section-eyebrow-icon" />Navigate</span>
             <h2 className="section-title">Quick Access</h2>
             <p className="section-subtitle">Jump directly to the most visited sections of our portal.</p>
           </div>
@@ -293,13 +316,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Recent PPAs */}
+      {/* ============================================================
+          Recent PPAs
+          ============================================================ */}
       {ppas.length > 0 && (
         <section className="section ppas-section">
           <div className="container">
             <div className="section-row">
               <div className="section-header section-header-left">
-                <span className="section-eyebrow">What's happening</span>
+                <span className="section-eyebrow"><BookOpenIcon className="section-eyebrow-icon" />What's happening</span>
                 <h2 className="section-title">Programs &amp; Activities</h2>
               </div>
               <Link to="/ppas" className="view-all-link">View All<ArrowRightIcon className="view-all-icon" /></Link>
@@ -321,7 +346,9 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* CTA */}
+      {/* ============================================================
+          CTA
+          ============================================================ */}
       <section className="cta-section">
         <div className="cta-pattern" />
         <div className="container cta-inner">
