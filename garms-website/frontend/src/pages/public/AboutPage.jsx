@@ -25,6 +25,11 @@ const SECTIONS = [
   { key: 'core_values', label: 'Core Values', Icon: IconGem },
   { key: 'goals', label: 'Goals & Objectives', Icon: IconFlag },
   { key: 'history', label: 'School History', Icon: IconClock },
+  // New editable sections
+  { key: 'chronology_of_school_heads', label: 'Chronology of School Heads', Icon: IconUser },
+  { key: 'historical_development', label: 'Historical Development of GARMS', Icon: IconClock },
+  { key: 'community_profile', label: 'Community Profile', Icon: IconUsers },
+  { key: 'demographics', label: 'Demographics', Icon: IconBuilding },
 ];
 
 const SUB_PAGES = [
@@ -63,12 +68,12 @@ export default function AboutPage() {
 
   return (
     <div>
-      {/* Hero */}
+      {/* Hero — subtitle/tagline removed per revision; only the page title remains */}
       <div className="page-header">
         <div className="container">
           <div className="breadcrumb"><Link to="/">Home</Link> › About Us</div>
           <h1>About GARMS</h1>
-          <p>Vision, Mission, Core Values, Goals &amp; History</p>
+          {/* No subtitle here per design revision */}
         </div>
       </div>
 
@@ -104,15 +109,13 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Identity pillars — presented as a connected timeline, since these
-          five sections are parts of one whole (who the school is), not
-          a plain unordered list */}
+      {/* Identity pillars + School Profile sections */}
       <section className="section">
         <div className="container">
           <span className="section-eyebrow">Our Identity</span>
-          <h2 className="section-title">Who We Are</h2>
+          <h2 className="section-title">School Profile</h2>
           <p className="section-subtitle">
-            Five pillars that define GARMS as an institution — read in order, or jump to what matters to you.
+            The pillars and history that define General Artemio Ricarte Memorial School.
           </p>
 
           {!loading && (

@@ -4,7 +4,6 @@ import { useSchoolInfo } from '../../hooks/useSchoolInfo';
 import { getImageUrl } from '../../utils/helpers';
 import './Footer.css';
 
-// Custom SVG Icons (reusing from Header for consistency)
 const LocationIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="icon">
     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" />
@@ -49,8 +48,9 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-top">
         <div className="container footer-grid">
+          {/* Brand column */}
           <div className="footer-brand-col">
-            <img src={getImageUrl(info?.logo_url) || 
+            <img src={getImageUrl(info?.logo_url) ||
               'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Department_of_Education_%28DepEd%29_of_the_Philippines.svg/200px-Department_of_Education_%28DepEd%29_of_the_Philippines.svg.png'}
               alt="GARMS Logo" className="footer-logo"
               onError={e => { e.target.style.display = 'none'; }} />
@@ -70,32 +70,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="footer-links-col">
-            <h4>Quick Links</h4>
-            <ul>
-              <li><Link to="/">Home</Link></li>
-              <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/about/organizational-structure">Organizational Structure</Link></li>
-              <li><Link to="/about/citizens-charter">Citizen's Charter</Link></li>
-              <li><Link to="/admissions">Admissions</Link></li>
-              <li><Link to="/ppas">Programs & Activities</Link></li>
-              <li><Link to="/faculty-staff">Faculty & Staff</Link></li>
-            </ul>
-          </div>
-
-          <div className="footer-links-col">
-            <h4>Resources</h4>
-            <ul>
-              <li><Link to="/issuances">Issuances</Link></li>
-              <li><Link to="/issuances?type=deped_order">DepEd Orders</Link></li>
-              <li><Link to="/learning-resources">Learning Resources</Link></li>
-              <li><Link to="/students-corner">Students' Corner</Link></li>
-              <li><Link to="/school-calendar">School Calendar</Link></li>
-              <li><Link to="/faq">FAQ</Link></li>
-              <li><Link to="/contact">Contact Us</Link></li>
-            </ul>
-          </div>
-
+          {/* Contact column */}
           <div className="footer-contact-col">
             <h4>Contact Information</h4>
             <ul className="contact-list">

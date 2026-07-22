@@ -50,6 +50,7 @@ const PlayIcon = (p) => (
   </svg>
 );
 
+// Faculty & Staff removed from navbar (now lives inside Organizational Structure page)
 const NAV_ITEMS = [
   { label: 'Home', path: '/' },
   {
@@ -74,9 +75,10 @@ const NAV_ITEMS = [
     children: [
       { label: 'Commendations', path: '/students-corner?tab=commendation' },
       { label: 'Featured Student', path: '/students-corner?tab=featured_student' },
-      { label: 'Accomplishments', path: '/students-corner?tab=accomplishment' },
+      { label: 'Student Accomplishments', path: '/students-corner?tab=accomplishment' },
     ]
   },
+  { label: 'Accomplishments', path: '/accomplishments' },
   { label: 'Learning Resources', path: '/learning-resources' },
   {
     label: 'Issuances', path: '/issuances',
@@ -87,7 +89,6 @@ const NAV_ITEMS = [
       { label: 'External Links', path: '/issuances#external' },
     ]
   },
-  { label: 'Faculty & Staff', path: '/faculty-staff' },
   { label: 'Calendar', path: '/school-calendar' },
   {
     label: 'Contact Us', path: '/contact',

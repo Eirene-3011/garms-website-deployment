@@ -5,9 +5,11 @@ import './AdminLayout.css';
 const MENU = [
   { path: '/admin', label: 'Dashboard', icon: '📊', exact: true },
   { path: '/admin/school-info', label: 'School Info', icon: '🏫' },
-  { path: '/admin/banners', label: 'Banner Images', icon: '🖼️' },
+  { path: '/admin/school-dashboard', label: 'School Dashboard', icon: '📊' },
+  { path: '/admin/banners', label: 'Slideshow Banners', icon: '🖼️' },
   { path: '/admin/photos', label: 'School Photos', icon: '📷' },
   { path: '/admin/content', label: 'About Us Content', icon: '📝' },
+  { path: '/admin/school-heads', label: 'Chronology of School Heads', icon: '👤' },
   { path: '/admin/org-chart', label: 'Org Chart', icon: '🏛️' },
   { path: '/admin/officials', label: 'Officials', icon: '👔' },
   { path: '/admin/staff', label: 'Faculty & Staff', icon: '👨‍🏫' },
@@ -16,6 +18,7 @@ const MENU = [
   { path: '/admin/enrollment-stats', label: 'Enrollment Statistics', icon: '📈' },
   { path: '/admin/ppas', label: 'Programs (PPAs)', icon: '🎓' },
   { path: '/admin/students', label: "Students' Corner", icon: '⭐' },
+  { path: '/admin/accomplishments', label: 'Accomplishments', icon: '🏆' },
   { path: '/admin/resources', label: 'Learning Resources', icon: '📚' },
   { path: '/admin/issuances', label: 'Issuances', icon: '📢' },
   { path: '/admin/internal-forms', label: 'Internal Forms', icon: '🔒' },
@@ -24,7 +27,7 @@ const MENU = [
   { path: '/admin/faqs', label: 'FAQs', icon: '❓' },
   { path: '/admin/calendar', label: 'School Calendar', icon: '📅' },
   { path: '/admin/contact', label: 'Contact Messages', icon: '✉️' },
-  { path: '/admin/feedback', label: 'Feedback Links', icon: '📊' },
+  { path: '/admin/feedback', label: 'Feedback / CSM Links', icon: '📊' },
 ];
 
 export default function AdminLayout() {

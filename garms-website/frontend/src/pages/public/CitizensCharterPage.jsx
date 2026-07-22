@@ -5,12 +5,12 @@ import { getImageUrl } from '../../utils/helpers';
 import { IconScroll, IconDownload, IconScale, IconExternalLink } from '../../components/Icons';
 
 export default function CitizensCharterPage() {
-  const [charter, setCharter] = useState(null);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api.get('/charter')
-      .then(r => setCharter(r.data))
+      .then(r => setDocuments(Array.isArray(r.data) ? r.data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -27,7 +27,7 @@ export default function CitizensCharterPage() {
       </div>
 
       <section className="section">
-        <div className="container" style={{ maxWidth: 860 }}>
+        <div className="container" style={{ maxWidth: 900 }}>
           <div className="charter-badges">
             <span className="charter-badge badge-red">
               <IconScale size={14} /> RA 11032 — EODB Act of 2018
@@ -38,36 +38,71 @@ export default function CitizensCharterPage() {
           </div>
 
           {loading ? (
-            <div className="card" style={{ padding: '32px 36px' }}>
-              <div className="skeleton" style={{ width: '40%', height: 18, marginBottom: 16 }} />
-              <div className="skeleton" style={{ width: '100%', height: 12, marginBottom: 10 }} />
-              <div className="skeleton" style={{ width: '95%', height: 12, marginBottom: 10 }} />
-              <div className="skeleton" style={{ width: '85%', height: 12 }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="card" style={{ padding: '20px 24px' }}>
+                  <div className="skeleton" style={{ width: '60%', height: 14, marginBottom: 10 }} />
+                  <div className="skeleton" style={{ width: '100%', height: 10, marginBottom: 8 }} />
+                  <div className="skeleton" style={{ width: '80%', height: 10 }} />
+                </div>
+              ))}
             </div>
-          ) : charter?.body_richtext ? (
-            <div
-              className="rich-content card"
-              style={{ padding: '32px 36px' }}
-              dangerouslySetInnerHTML={{ __html: charter.body_richtext }}
-            />
-          ) : (
+          ) : documents.length === 0 ? (
             <div className="alert alert-info">
-              Citizen's Charter content is being prepared. Please check back soon or contact the school office.
+              Citizen's Charter documents are being prepared. Please check back soon or contact the school office.
             </div>
-          )}
-
-          {charter?.pdf_file_url && (
-            <div style={{ marginTop: 24 }}>
-              <a
-                href={getImageUrl(charter.pdf_file_url)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-primary"
-              >
-                <IconDownload size={18} />
-                Download Citizen's Charter (PDF)
-              </a>
-            </div>
+          ) : (
+            <>
+              <p style={{ color: 'var(--gray-500)', fontSize: '0.88rem', marginBottom: 24 }}>
+                {documents.length} of 16 documents available
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
+                {documents.map((doc, i) => (
+                  <div key={doc.id} className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                      <span style={{
+                        flexShrink: 0,
+                        width: 32, height: 32,
+                        background: 'var(--red-pale)',
+                        borderRadius: 6,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'var(--red-primary)', fontWeight: 700, fontSize: '0.78rem'
+                      }}>
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <div>
+                        <h3 style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--gray-900)', margin: 0, lineHeight: 1.4 }}>
+                          {doc.title}
+                        </h3>
+                      </div>
+                    </div>
+                    {doc.description && (
+                      <p style={{ fontSize: '0.82rem', color: 'var(--gray-500)', margin: 0, lineHeight: 1.5 }}>
+                        {doc.description}
+                      </p>
+                    )}
+                    <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+                      {doc.pdf_url ? (
+                        <a
+                          href={getImageUrl(doc.pdf_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-outline btn-sm"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                        >
+                          <IconDownload size={14} />
+                          View / Download PDF
+                        </a>
+                      ) : (
+                        <span style={{ fontSize: '0.78rem', color: 'var(--gray-400)', fontStyle: 'italic' }}>
+                          PDF not yet uploaded
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
           <div className="divider" />

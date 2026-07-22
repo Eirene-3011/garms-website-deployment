@@ -1,4 +1,7 @@
-
+-- ============================================================
+-- GARMS Seed Data
+-- ============================================================
+USE garms_db;
 
 -- Admin user (magic link only — no password)
 INSERT IGNORE INTO admin_users (username, email, role) VALUES ('admin', '107960@deped.gov.ph', 'super_admin');

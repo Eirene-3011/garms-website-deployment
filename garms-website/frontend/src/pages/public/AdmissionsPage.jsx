@@ -22,10 +22,11 @@ const CHARTER_INFO = {
 
 const DEFAULT_ONLINE_ENROLLMENT_LINK = 'https://forms.gle/UQkCZ2HXPTedFmxY7';
 
+// Standard enrollment requirements per DepEd policy
 const STANDARD_REQUIREMENTS = [
   {
     doc: 'Basic Education Enrollment Form (BEEF) — One (1) scanned copy (digital copy)',
-    where: 'Downloadable from DepEd Order No. 17, s. 2025',
+    where: 'Downloadable from the school or the DepEd enrollment platform',
   },
   {
     doc: 'Confirmation Slip — One (1) scanned copy (digital copy)',
@@ -40,12 +41,11 @@ const STANDARD_REQUIREMENTS = [
 const ALTERNATIVE_REQUIREMENTS = [
   'National ID — One (1) original copy for verification, and one (1) photocopy',
   'Certificate of Live Birth (Local Civil Registry) — One (1) original copy and one (1) photocopy',
-  'PhilHealth ID — One (1) original copy and one (1) photocopy',
+  'PhilHealth ID — One (1) original copy for verification, and one (1) photocopy',
   'Marriage Certificate of parents — One (1) original copy for verification, and one (1) photocopy',
   'PWD ID — One (1) original copy for verification, and one (1) photocopy',
-  'Barangay certification establishing the child\u2019s identity (name, date of birth, sex, and name of parents)',
+  'Barangay certification establishing the child\'s identity (name, date of birth, sex, and name of parents)',
   'Affidavit of undertaking to be executed by parents — One (1) original copy and one (1) photocopy',
-  'Certificate of Foundling (NSO/PSA-issued, if the learner is determined to be a foundling upon enrollment) — One (1) original copy and one (1) photocopy',
   'Baptismal Certificate — One (1) original copy and one (1) photocopy',
 ];
 
@@ -57,14 +57,14 @@ const SPECIAL_CASE_REQUIREMENTS = [
   },
   {
     condition: 'Persons Deprived of Liberty (PDLs) enrolling in ALS',
-    doc: 'If the PSA Birth Certificate or secondary documents are not available: Certificate of PDL\u2019s Identity — One (1) original copy',
+    doc: 'Certificate of PDL\'s Identity — One (1) original copy (if PSA Birth Certificate or secondary documents are not available)',
     where: 'Bureau of Jail Management and Penology — Office of the Warden',
   },
 ];
 
 const PROCESS_STEPS = [
   {
-    clientStep: 'Submit complete documents through the School\u2019s official platform/email address, along with the filled-out BEEF.',
+    clientStep: 'Submit complete documents through the School\'s official platform or email address, along with the filled-out BEEF.',
     actions: [
       {
         action: 'Download and print received documents, and check for completion.',
@@ -116,7 +116,7 @@ export default function AdmissionsPage() {
       <div className="page-header">
         <div className="container">
           <div className="breadcrumb"><Link to="/">Home</Link> › Admissions</div>
-          <h1>Admissions & Enrollment</h1>
+          <h1>Admissions &amp; Enrollment</h1>
           <p>Everything you need to know about enrolling at GARMS</p>
         </div>
       </div>
@@ -124,6 +124,7 @@ export default function AdmissionsPage() {
       <section className="section">
         <div className="container" style={{ maxWidth: 900 }}>
 
+          {/* Quick stats */}
           <div className="stat-grid">
             {stats.map(s => (
               <div key={s.label} className={`stat-card${s.highlight ? ' stat-card-highlight' : ''}`}>
@@ -138,6 +139,7 @@ export default function AdmissionsPage() {
             ))}
           </div>
 
+          {/* Charter metadata */}
           <div className="card" style={{ padding: 24, marginBottom: 24 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
               <div>
@@ -159,6 +161,7 @@ export default function AdmissionsPage() {
             </div>
           </div>
 
+          {/* Requirements */}
           <div className="card" style={{ padding: 32, marginBottom: 24 }}>
             <h2 className="section-card-title">
               <span className="section-card-title-icon"><IconClipboard size={18} /></span>
@@ -186,8 +189,8 @@ export default function AdmissionsPage() {
                 <h3 className="stat-card-label" style={{ marginBottom: 8 }}>
                   If PSA Birth Certificate Is Not Available
                 </h3>
-                <p style={{ marginBottom: 8, opacity: 0.8, fontSize: 14 }}>
-                  Any of the following secondary documents may be provided by the client instead:
+                <p style={{ marginBottom: 10, fontSize: 14, opacity: 0.8 }}>
+                  Any of the following may be submitted as alternative:
                 </p>
                 <ul className="checklist" style={{ marginBottom: 20 }}>
                   {ALTERNATIVE_REQUIREMENTS.map(item => (
@@ -199,22 +202,18 @@ export default function AdmissionsPage() {
                 </ul>
 
                 <h3 className="stat-card-label" style={{ marginBottom: 8 }}>Special Cases</h3>
-                <ul className="checklist">
-                  {SPECIAL_CASE_REQUIREMENTS.map(item => (
-                    <li key={item.condition}>
-                      <span className="checklist-icon" aria-hidden="true"><IconCheck size={13} /></span>
-                      <span>
-                        <strong>{item.condition}:</strong> {item.doc}
-                        <br />
-                        <span style={{ opacity: 0.7, fontSize: 13 }}>Where to secure: {item.where}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                {SPECIAL_CASE_REQUIREMENTS.map(sc => (
+                  <div key={sc.condition} style={{ marginBottom: 12, padding: '12px 16px', background: 'var(--gray-50)', borderRadius: 8, border: '1px solid var(--gray-200)' }}>
+                    <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{sc.condition}</p>
+                    <p style={{ fontSize: 13, marginBottom: 3 }}>Required: {sc.doc}</p>
+                    <p style={{ fontSize: 12, opacity: 0.7 }}>Where to secure: {sc.where}</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
+          {/* Enrollment Process */}
           <div className="card" style={{ padding: 32, marginBottom: 24 }}>
             <h2 className="section-card-title">
               <span className="section-card-title-icon"><IconListOrdered size={18} /></span>
@@ -225,43 +224,32 @@ export default function AdmissionsPage() {
               <div className="rich-content" dangerouslySetInnerHTML={{ __html: info.process_richtext }} />
             ) : (
               <div>
-                {PROCESS_STEPS.map((group, i) => (
-                  <ol className="step-list" key={i} style={{ marginBottom: 8 }}>
-                    <li className="step-item">
-                      <span className="step-number">1</span>
-                      <span className="step-text"><strong>Client Step:</strong> {group.clientStep}</span>
-                    </li>
-                    {group.actions.map((a, idx) => (
-                      <li className="step-item" key={idx}>
-                        <span className="step-number">1.{idx + 1}</span>
-                        <span className="step-text">
-                          {a.action}
-                          {a.note && (
-                            <span style={{ display: 'block' }}>
-                              <br />
-                              <span style={{ opacity: 0.7, fontSize: 13 }}>Note: {a.note}</span>
-                            </span>
-                          )}
-                          <br />
-                          <span style={{ opacity: 0.7, fontSize: 13 }}>
-                            Fee: {a.fee} · Processing Time: {a.time} · Responsible: {a.responsible}
-                          </span>
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
+                {PROCESS_STEPS.map((step, idx) => (
+                  <div key={idx} style={{ marginBottom: 24 }}>
+                    <div style={{ padding: '10px 16px', background: 'var(--red-pale)', borderRadius: 8, marginBottom: 16, border: '1px solid var(--red-light)' }}>
+                      <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--red-dark)' }}>Client Step {idx + 1}</p>
+                      <p style={{ fontSize: 14, color: 'var(--red-dark)' }}>{step.clientStep}</p>
+                    </div>
+                    <div>
+                      {step.actions.map((a, ai) => (
+                        <div key={ai} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '10px 20px', padding: '12px 0', borderBottom: '1px solid var(--gray-100)', fontSize: 13 }}>
+                          <div>
+                            <p style={{ fontWeight: 600, marginBottom: 4 }}>Step {ai + 1}: {a.action}</p>
+                            {a.note && <p style={{ opacity: 0.7, fontSize: 12 }}>Note: {a.note}</p>}
+                            <p style={{ opacity: 0.7, fontSize: 12 }}>By: {a.responsible}</p>
+                          </div>
+                          <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            <p style={{ fontWeight: 600 }}>Fee: {a.fee}</p>
+                          </div>
+                          <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            <p style={{ fontWeight: 600 }}>Time: {a.time}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 ))}
-
-                <div
-                  style={{
-                    marginTop: 16,
-                    paddingTop: 16,
-                    borderTop: '1px solid rgba(0,0,0,0.1)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontWeight: 600,
-                  }}
-                >
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
                   <span>Total</span>
                   <span>Fee: {TOTAL_PROCESSING.fee} · Processing Time: {TOTAL_PROCESSING.time}</span>
                 </div>
@@ -269,6 +257,7 @@ export default function AdmissionsPage() {
             )}
           </div>
 
+          {/* Enrollment schedule (from admin if set) */}
           {info?.schedule && (
             <div className="note-panel" style={{ marginBottom: 24 }}>
               <div className="note-panel-icon"><IconCalendar size={18} /></div>
@@ -279,6 +268,7 @@ export default function AdmissionsPage() {
             </div>
           )}
 
+          {/* Primary CTA — Online Enrollment only */}
           <a
             href={onlineEnrollmentLink}
             target="_blank"
@@ -292,9 +282,10 @@ export default function AdmissionsPage() {
 
           <div className="divider" />
 
+          {/* Contact CTA — internal link only */}
           <div className="cta-panel">
             <div className="cta-panel-icon" aria-hidden="true"><IconPhone size={20} /></div>
-            <p>For questions about enrollment, please contact the school.</p>
+            <p>Have questions about enrollment? Our staff will be happy to assist you.</p>
             <Link to="/contact" className="btn btn-outline">Contact the School</Link>
           </div>
 

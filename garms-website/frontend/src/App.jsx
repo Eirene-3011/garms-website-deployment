@@ -14,9 +14,9 @@ import AdmissionsPage from './pages/public/AdmissionsPage';
 import EnrollmentStatisticsPage from './pages/public/EnrollmentStatisticsPage';
 import PPAsPage from './pages/public/PPAsPage';
 import StudentsCornerPage from './pages/public/StudentsCornerPage';
+import AccomplishmentsPage from './pages/public/AccomplishmentsPage';
 import LearningResourcesPage from './pages/public/LearningResourcesPage';
 import IssuancesPage from './pages/public/IssuancesPage';
-import StaffDirectoryPage from './pages/public/StaffDirectoryPage';
 import SchoolCalendarPage from './pages/public/SchoolCalendarPage';
 import ContactPage from './pages/public/ContactPage';
 import FAQPage from './pages/public/FAQPage';
@@ -46,6 +46,9 @@ import AdminOrgChart from './pages/admin/AdminOrgChart';
 import AdminFeedback from './pages/admin/AdminFeedback';
 import AdminExternalLinks from './pages/admin/AdminExternalLinks';
 import AdminEnrollmentStats from './pages/admin/AdminEnrollmentStats';
+import AdminSchoolDashboard from './pages/admin/AdminSchoolDashboard';
+import AdminAccomplishments from './pages/admin/AdminAccomplishments';
+import AdminSchoolHeads from './pages/admin/AdminSchoolHeads';
 import RequireAuth from './components/admin/RequireAuth';
 
 export default function App() {
@@ -64,9 +67,9 @@ export default function App() {
           <Route path="/admissions/enrollment-statistics" element={<EnrollmentStatisticsPage />} />
           <Route path="/ppas" element={<PPAsPage />} />
           <Route path="/students-corner" element={<StudentsCornerPage />} />
+          <Route path="/accomplishments" element={<AccomplishmentsPage />} />
           <Route path="/learning-resources" element={<LearningResourcesPage />} />
           <Route path="/issuances" element={<IssuancesPage />} />
-          <Route path="/faculty-staff" element={<StaffDirectoryPage />} />
           <Route path="/school-calendar" element={<SchoolCalendarPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/faq" element={<FAQPage />} />
@@ -87,6 +90,7 @@ export default function App() {
           <Route path="committees" element={<AdminCommittees />} />
           <Route path="ppas" element={<AdminPPAs />} />
           <Route path="students" element={<AdminStudents />} />
+          <Route path="accomplishments" element={<AdminAccomplishments />} />
           <Route path="resources" element={<AdminResources />} />
           <Route path="issuances" element={<AdminIssuances />} />
           <Route path="internal-forms" element={<AdminInternalForms />} />
@@ -99,6 +103,8 @@ export default function App() {
           <Route path="photos" element={<AdminPhotos />} />
           <Route path="feedback" element={<AdminFeedback />} />
           <Route path="external-links" element={<AdminExternalLinks />} />
+          <Route path="school-dashboard" element={<AdminSchoolDashboard />} />
+          <Route path="school-heads" element={<AdminSchoolHeads />} />
         </Route>
       </Routes>
     </BrowserRouter>

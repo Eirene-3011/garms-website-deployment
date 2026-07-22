@@ -1,82 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
-import { IconSearch, IconChevronDown, IconMessageSquare } from '../../components/Icons';
 
 export default function FAQPage() {
   const [faqs, setFaqs] = useState([]);
-  const [search, setSearch] = useState('');
+  const [open, setOpen] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api.get('/faqs').then(r => setFaqs(r.data)).finally(() => setLoading(false));
   }, []);
 
-  const filtered = faqs.filter(f =>
-    !search || f.question.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="breadcrumb"><Link to="/">Home</Link> › FAQ</div>
+          <div className="breadcrumb"><Link to="/">Home</Link> › <Link to="/contact">Contact</Link> › FAQ</div>
           <h1>Frequently Asked Questions</h1>
           <p>Answers to common questions about GARMS</p>
         </div>
       </div>
-
       <section className="section">
-        <div className="container" style={{ maxWidth: 860 }}>
-          <div style={{ marginBottom: 32 }}>
-            <div className="search-input-wrap search-input-wrap-lg">
-              <span className="search-input-icon" aria-hidden="true"><IconSearch size={16} /></span>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search questions..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
-
+        <div className="container" style={{ maxWidth: 760 }}>
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {Array.from({ length: 5 }).map((_, i) => (
-                <div className="card" key={i} style={{ padding: '18px 24px' }}>
-                  <div className="skeleton" style={{ width: '70%', height: 14 }} />
+                <div key={i} className="card" style={{ padding: '16px 20px' }}>
+                  <div className="skeleton" style={{ width: '70%', height: 16 }} />
                 </div>
               ))}
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon" aria-hidden="true"><IconSearch size={22} /></div>
-              <p>No FAQ entries found. {search && 'Try a different search term.'}</p>
-            </div>
+          ) : faqs.length === 0 ? (
+            <div className="alert alert-info">No FAQs have been posted yet.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {filtered.map((f, i) => (
-                <details key={f.id} className="card faq-item">
-                  <summary className="faq-summary">
-                    <span className="faq-question">
-                      <span className="faq-number" aria-hidden="true">{i + 1}</span>
-                      {f.question}
-                    </span>
-                    <span className="faq-toggle" aria-hidden="true"><IconChevronDown size={15} /></span>
-                  </summary>
-                  <div className="faq-answer">
-                    <div className="rich-content" dangerouslySetInnerHTML={{ __html: f.answer_richtext }} />
-                  </div>
-                </details>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {faqs.map((faq, i) => (
+                <div key={faq.id} style={{ border: '1px solid var(--gray-200)', borderRadius: 10, overflow: 'hidden' }}>
+                  <button
+                    onClick={() => setOpen(open === i ? null : i)}
+                    style={{
+                      width: '100%', textAlign: 'left', padding: '16px 20px',
+                      background: open === i ? 'var(--red-pale)' : 'white',
+                      border: 'none', cursor: 'pointer',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      gap: 12, fontWeight: 700, fontSize: '0.9rem', color: 'var(--gray-900)'
+                    }}
+                  >
+                    <span>{faq.question}</span>
+                    <span style={{ flexShrink: 0, color: 'var(--red-primary)' }}>{open === i ? '▲' : '▼'}</span>
+                  </button>
+                  {open === i && (
+                    <div style={{ padding: '14px 20px 18px', borderTop: '1px solid var(--gray-200)', background: 'white', fontSize: '0.88rem', color: 'var(--gray-700)', lineHeight: 1.7 }}>
+                      {faq.answer}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
-
-          <div className="divider" />
-          <div className="cta-panel">
-            <div className="cta-panel-icon" aria-hidden="true"><IconMessageSquare size={20} /></div>
-            <p>Didn't find your answer? Contact us directly.</p>
+          <div style={{ marginTop: 32, textAlign: 'center' }}>
+            <p style={{ color: 'var(--gray-500)', marginBottom: 12, fontSize: '0.88rem' }}>Can't find the answer you're looking for?</p>
             <Link to="/contact" className="btn btn-primary">Contact the School</Link>
           </div>
         </div>

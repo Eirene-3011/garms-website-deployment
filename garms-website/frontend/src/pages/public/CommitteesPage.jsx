@@ -4,6 +4,8 @@ import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
 import { IconUsers, IconDownload } from '../../components/Icons';
 
+const PLACEHOLDER_AVATAR = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="%23e5e7eb"/><circle cx="40" cy="30" r="16" fill="%239ca3af"/><ellipse cx="40" cy="62" rx="24" ry="16" fill="%239ca3af"/></svg>';
+
 export default function CommitteesPage() {
   const [committees, setCommittees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,7 @@ export default function CommitteesPage() {
         <div className="container">
           <div className="breadcrumb"><Link to="/">Home</Link> › <Link to="/about">About Us</Link> › Committees</div>
           <div className="page-header-icon"><IconUsers size={26} /></div>
-          <h1>Committees & Councils</h1>
+          <h1>Committees &amp; Councils</h1>
           <p>PTA, HPTA, SPTA, SSG/SPG and school governance bodies</p>
         </div>
       </div>
@@ -63,22 +65,44 @@ export default function CommitteesPage() {
                   <div className="committee-body">
                     {c.description && <p className="committee-desc">{c.description}</p>}
                     {c.members?.length > 0 ? (
-                      <div className="table-wrapper">
-                        <table>
-                          <thead>
-                            <tr><th>#</th><th>Name</th><th>Role / Position</th><th>Contact</th></tr>
-                          </thead>
-                          <tbody>
-                            {c.members.map((m, i) => (
-                              <tr key={m.id}>
-                                <td>{i + 1}</td>
-                                <td style={{ fontWeight: 600 }}>{m.full_name}</td>
-                                <td>{m.role}</td>
-                                <td>{m.contact_no || '—'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                      /* Card grid with photos — same layout as Faculty & Staff directory */
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                        gap: 16,
+                        marginTop: 8
+                      }}>
+                        {c.members.map(m => (
+                          <div key={m.id} style={{
+                            background: 'var(--gray-50)',
+                            border: '1px solid var(--gray-200)',
+                            borderRadius: 8,
+                            padding: '14px 10px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 8,
+                            textAlign: 'center'
+                          }}>
+                            <img
+                              src={m.photo_url ? getImageUrl(m.photo_url) : PLACEHOLDER_AVATAR}
+                              alt={m.full_name}
+                              style={{
+                                width: 64, height: 64,
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                border: '2px solid var(--gray-200)',
+                                background: '#e5e7eb'
+                              }}
+                              onError={e => { e.target.src = PLACEHOLDER_AVATAR; }}
+                            />
+                            <div>
+                              <p style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--gray-900)', margin: 0, lineHeight: 1.3 }}>{m.full_name}</p>
+                              {m.role && <p style={{ fontSize: '0.72rem', color: 'var(--gray-500)', margin: '3px 0 0' }}>{m.role}</p>}
+                              {m.contact_no && <p style={{ fontSize: '0.7rem', color: 'var(--gray-400)', margin: '3px 0 0' }}>{m.contact_no}</p>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <p className="empty-note">Member list coming soon.</p>

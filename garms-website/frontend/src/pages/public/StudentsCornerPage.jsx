@@ -1,37 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../../utils/api';
-import { getImageUrl, formatDateShort } from '../../utils/helpers';
-import { IconMedal, IconStar, IconTrophy, IconCalendar } from '../../components/Icons';
+import { getImageUrl } from '../../utils/helpers';
 
 const TABS = [
-  { key: 'commendation', label: 'Commendations', Icon: IconMedal },
-  { key: 'featured_student', label: 'Featured Student', Icon: IconStar },
-  { key: 'accomplishment', label: 'Accomplishments', Icon: IconTrophy },
+  { key: 'commendation', label: '🌟 Commendations' },
+  { key: 'featured_student', label: '⭐ Featured Student' },
+  { key: 'accomplishment', label: '🏅 Student Accomplishments' },
 ];
 
 export default function StudentsCornerPage() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const params = new URLSearchParams(location.search);
-  const initialTab = params.get('tab') || 'commendation';
-  const [tab, setTab] = useState(initialTab);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => { setTab(params.get('tab') || 'commendation'); }, [location.search]);
+  const [loading, setLoading] = useState(true);
+  const activeTab = searchParams.get('tab') || 'commendation';
 
   useEffect(() => {
     setLoading(true);
-    api.get(`/students?category=${tab}`).then(r => setItems(r.data)).finally(() => setLoading(false));
-  }, [tab]);
-
-  const activeTab = TABS.find(t => t.key === tab) || TABS[0];
-
-  const selectTab = (key) => {
-    if (key === tab) return;
-    navigate(`${location.pathname}?tab=${key}`);
-  };
+    api.get(`/students?type=${activeTab}`)
+      .then(r => setItems(r.data))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [activeTab]);
 
   return (
     <div>
@@ -39,68 +29,45 @@ export default function StudentsCornerPage() {
         <div className="container">
           <div className="breadcrumb"><Link to="/">Home</Link> › Students' Corner</div>
           <h1>Students' Corner</h1>
-          <p>Celebrating our learners' achievements, accomplishments, and milestones</p>
+          <p>Celebrating the achievements of our Artemians</p>
         </div>
       </div>
 
       <section className="section">
         <div className="container">
-          <div className="tab-nav" role="tablist" aria-label="Student recognition categories">
+          <div style={{ display: 'flex', gap: 8, marginBottom: 28, borderBottom: '2px solid var(--gray-200)', paddingBottom: 0 }}>
             {TABS.map(t => (
-              <button
-                key={t.key}
-                role="tab"
-                aria-selected={tab === t.key}
-                className={`tab-btn${tab === t.key ? ' tab-btn-active' : ''}`}
-                onClick={() => selectTab(t.key)}
-              >
-                <t.Icon size={16} />
-                {t.label}
-              </button>
+              <button key={t.key}
+                className={`tab-btn${activeTab === t.key ? ' active' : ''}`}
+                onClick={() => setSearchParams({ tab: t.key })}
+              >{t.label}</button>
             ))}
           </div>
 
           {loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div className="card" key={i}>
-                  <div className="skeleton" style={{ width: '100%', height: 168, borderRadius: 0 }} />
-                  <div className="student-card-body">
-                    <div className="skeleton" style={{ width: '35%', height: 10, marginBottom: 12 }} />
-                    <div className="skeleton" style={{ width: '65%', height: 14, marginBottom: 10 }} />
-                    <div className="skeleton" style={{ width: '100%', height: 10, marginBottom: 6 }} />
-                    <div className="skeleton" style={{ width: '80%', height: 10 }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="card">
+                  <div className="skeleton" style={{ width: '100%', height: 200 }} />
+                  <div className="card-body" style={{ padding: '16px 20px' }}>
+                    <div className="skeleton" style={{ width: '70%', height: 16, marginBottom: 8 }} />
+                    <div className="skeleton" style={{ width: '90%', height: 10 }} />
                   </div>
                 </div>
               ))}
             </div>
           ) : items.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon" aria-hidden="true"><activeTab.Icon size={22} /></div>
-              <p>No {activeTab.label.toLowerCase()} entries yet. Check back soon!</p>
-            </div>
+            <div className="alert alert-info">No entries yet for this category.</div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
-              {items.map(s => (
-                <div key={s.id} className="card">
-                  {s.image_url ? (
-                    <img src={getImageUrl(s.image_url)} alt={s.student_name} className="student-card-media" />
-                  ) : (
-                    <div className="student-card-fallback">
-                      <div className="student-card-fallback-icon" aria-hidden="true">
-                        <activeTab.Icon size={26} />
-                      </div>
-                    </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
+              {items.map(item => (
+                <div key={item.id} className="card" style={{ overflow: 'hidden' }}>
+                  {item.image_url && (
+                    <img src={getImageUrl(item.image_url)} alt={item.title || item.student_name} style={{ width: '100%', height: 200, objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
                   )}
-                  <div className="student-card-body">
-                    {s.date_posted && (
-                      <p className="student-card-date">
-                        <IconCalendar size={12} />
-                        {formatDateShort(s.date_posted)}
-                      </p>
-                    )}
-                    {s.student_name && <h3 className="student-card-name">{s.student_name}</h3>}
-                    {s.description && <p className="student-card-desc">{s.description}</p>}
+                  <div style={{ padding: '16px 20px' }}>
+                    <h3 style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--gray-900)', margin: '0 0 6px' }}>{item.title || item.student_name}</h3>
+                    {item.description && <p style={{ fontSize: '0.82rem', color: 'var(--gray-600)', margin: 0, lineHeight: 1.5 }}>{item.description}</p>}
                   </div>
                 </div>
               ))}

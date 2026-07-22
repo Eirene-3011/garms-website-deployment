@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
 import { toast } from 'react-toastify';
+import { getImageUrl } from '../../utils/helpers';
 
 const BLANK_C = { committee_name: '', description: '', sort_order: 0 };
 const BLANK_M = { full_name: '', role: '', contact_no: '' };
+
+const PLACEHOLDER_AVATAR = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="%23e5e7eb"/><circle cx="40" cy="30" r="16" fill="%239ca3af"/><ellipse cx="40" cy="62" rx="24" ry="16" fill="%239ca3af"/></svg>';
 
 export default function AdminCommittees() {
   const [committees, setCommittees] = useState([]);
@@ -13,6 +16,7 @@ export default function AdminCommittees() {
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [memberForms, setMemberForms] = useState({});
+  const [memberPhotos, setMemberPhotos] = useState({}); // committeeId -> File
 
   const load = () => api.get('/committees').then(r => setCommittees(r.data)).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -35,14 +39,45 @@ export default function AdminCommittees() {
   const handleAddMember = async (committeeId) => {
     const mf = memberForms[committeeId] || BLANK_M;
     if (!mf.full_name) { toast.error('Member name required.'); return; }
-    await api.post(`/committees/${committeeId}/members`, mf);
+    const fd = new FormData();
+    fd.append('full_name', mf.full_name);
+    fd.append('role', mf.role || '');
+    fd.append('contact_no', mf.contact_no || '');
+    if (memberPhotos[committeeId]) fd.append('photo', memberPhotos[committeeId]);
+    await api.post(`/committees/${committeeId}/members`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     toast.success('Member added!');
     setMemberForms(f => ({ ...f, [committeeId]: BLANK_M }));
+    setMemberPhotos(p => ({ ...p, [committeeId]: null }));
     load();
   };
 
-  const handleDeleteMember = async (id) => { if (!confirm('Remove member?')) return; await api.delete(`/committees/members/${id}`); toast.success('Removed.'); load(); };
-  const handleDelete = async (id) => { if (!confirm('Delete committee?')) return; await api.delete(`/committees/${id}`); toast.success('Deleted.'); load(); };
+  const handleUploadMemberPhoto = async (memberId, file) => {
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('photo', file);
+    // We only update the photo — keep existing name/role/contact by reading from state
+    const allMembers = committees.flatMap(c => c.members || []);
+    const m = allMembers.find(x => x.id === memberId);
+    if (!m) return;
+    fd.append('full_name', m.full_name);
+    fd.append('role', m.role || '');
+    fd.append('contact_no', m.contact_no || '');
+    await api.put(`/committees/members/${memberId}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+    toast.success('Photo updated!');
+    load();
+  };
+
+  const handleDeleteMember = async (id) => {
+    if (!confirm('Remove member?')) return;
+    await api.delete(`/committees/members/${id}`);
+    toast.success('Removed.'); load();
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete committee?')) return;
+    await api.delete(`/committees/${id}`);
+    toast.success('Deleted.'); load();
+  };
 
   return (
     <div className="admin-page">
@@ -81,29 +116,58 @@ export default function AdminCommittees() {
           {/* Members */}
           <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--gray-700)', marginBottom: 10 }}>Members ({c.members?.length || 0})</h4>
           {c.members?.length > 0 && (
-            <div className="table-wrapper" style={{ marginBottom: 16 }}>
-              <table>
-                <thead><tr><th>Name</th><th>Role</th><th>Contact</th><th></th></tr></thead>
-                <tbody>
-                  {c.members.map(m => (
-                    <tr key={m.id}>
-                      <td style={{ fontWeight: 600 }}>{m.full_name}</td>
-                      <td>{m.role || '—'}</td>
-                      <td>{m.contact_no || '—'}</td>
-                      <td><button className="btn btn-ghost btn-sm" style={{ color: 'var(--red-primary)' }} onClick={() => handleDeleteMember(m.id)}>🗑️</button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 16 }}>
+              {c.members.map(m => (
+                <div key={m.id} style={{ border: '1px solid var(--gray-200)', borderRadius: 8, padding: '12px 10px', textAlign: 'center', background: 'var(--gray-50)' }}>
+                  {/* Photo */}
+                  <div style={{ position: 'relative', display: 'inline-block', marginBottom: 8 }}>
+                    <img
+                      src={m.photo_url ? getImageUrl(m.photo_url) : PLACEHOLDER_AVATAR}
+                      alt={m.full_name}
+                      style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--gray-200)' }}
+                      onError={e => { e.target.src = PLACEHOLDER_AVATAR; }}
+                    />
+                    {/* Upload photo button */}
+                    <label
+                      title="Upload photo"
+                      style={{
+                        position: 'absolute', bottom: -2, right: -2,
+                        background: 'var(--red-primary)', color: '#fff',
+                        borderRadius: '50%', width: 20, height: 20,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', fontSize: '0.7rem'
+                      }}
+                    >
+                      📷
+                      <input
+                        type="file" accept="image/*" style={{ display: 'none' }}
+                        onChange={e => { if (e.target.files[0]) handleUploadMemberPhoto(m.id, e.target.files[0]); }}
+                      />
+                    </label>
+                  </div>
+                  <p style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--gray-900)', margin: '0 0 2px', lineHeight: 1.3 }}>{m.full_name}</p>
+                  {m.role && <p style={{ fontSize: '0.7rem', color: 'var(--gray-500)', margin: '0 0 2px' }}>{m.role}</p>}
+                  {m.contact_no && <p style={{ fontSize: '0.68rem', color: 'var(--gray-400)', margin: 0 }}>{m.contact_no}</p>}
+                  <button className="btn btn-ghost btn-sm" style={{ color: 'var(--red-primary)', fontSize: '0.7rem', marginTop: 6 }} onClick={() => handleDeleteMember(m.id)}>Remove</button>
+                </div>
+              ))}
             </div>
           )}
 
           {/* Add member form */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <input type="text" className="form-control" style={{ flex: 1, minWidth: 160 }} placeholder="Member name" value={(memberForms[c.id] || BLANK_M).full_name} onChange={e => setMemberForms(f => ({ ...f, [c.id]: { ...(f[c.id] || BLANK_M), full_name: e.target.value } }))} />
-            <input type="text" className="form-control" style={{ flex: 1, minWidth: 140 }} placeholder="Role/Position" value={(memberForms[c.id] || BLANK_M).role} onChange={e => setMemberForms(f => ({ ...f, [c.id]: { ...(f[c.id] || BLANK_M), role: e.target.value } }))} />
-            <input type="text" className="form-control" style={{ flex: 1, minWidth: 120 }} placeholder="Contact (optional)" value={(memberForms[c.id] || BLANK_M).contact_no} onChange={e => setMemberForms(f => ({ ...f, [c.id]: { ...(f[c.id] || BLANK_M), contact_no: e.target.value } }))} />
-            <button className="btn btn-primary btn-sm" onClick={() => handleAddMember(c.id)}>+ Add Member</button>
+          <div style={{ background: 'var(--gray-50)', borderRadius: 8, padding: '12px 14px', border: '1px solid var(--gray-200)' }}>
+            <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--gray-700)', marginBottom: 10 }}>+ Add Member</p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <input type="text" className="form-control" style={{ flex: '1 1 150px' }} placeholder="Member name *" value={(memberForms[c.id] || BLANK_M).full_name} onChange={e => setMemberForms(f => ({ ...f, [c.id]: { ...(f[c.id] || BLANK_M), full_name: e.target.value } }))} />
+              <input type="text" className="form-control" style={{ flex: '1 1 130px' }} placeholder="Role/Position" value={(memberForms[c.id] || BLANK_M).role} onChange={e => setMemberForms(f => ({ ...f, [c.id]: { ...(f[c.id] || BLANK_M), role: e.target.value } }))} />
+              <input type="text" className="form-control" style={{ flex: '1 1 120px' }} placeholder="Contact (optional)" value={(memberForms[c.id] || BLANK_M).contact_no} onChange={e => setMemberForms(f => ({ ...f, [c.id]: { ...(f[c.id] || BLANK_M), contact_no: e.target.value } }))} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <label style={{ fontSize: '0.72rem', color: 'var(--gray-500)' }}>Photo (optional)</label>
+                <input type="file" accept="image/*" style={{ fontSize: '0.78rem' }}
+                  onChange={e => setMemberPhotos(p => ({ ...p, [c.id]: e.target.files[0] || null }))} />
+              </div>
+              <button className="btn btn-primary btn-sm" onClick={() => handleAddMember(c.id)}>+ Add</button>
+            </div>
           </div>
         </div>
       ))}

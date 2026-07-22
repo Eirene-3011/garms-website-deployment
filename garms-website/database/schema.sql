@@ -17,14 +17,12 @@ CREATE TABLE IF NOT EXISTS admin_users (
 );
 
 -- Single-row school settings
--- NOTE: TEXT columns cannot carry a DEFAULT in MySQL/TiDB, so those defaults
--- are inserted as an actual seed row below instead of as column defaults.
 CREATE TABLE IF NOT EXISTS school_info (
   id INT AUTO_INCREMENT PRIMARY KEY,
   school_name VARCHAR(255) NOT NULL DEFAULT 'General Artemio Ricarte Memorial School',
   school_id_no VARCHAR(50) DEFAULT '107960',
   school_type VARCHAR(100) DEFAULT 'Public Elementary',
-  address TEXT,
+  address TEXT DEFAULT 'Brgy. Bagumbayan, General Trias City, Cavite',
   region VARCHAR(100) DEFAULT 'Region IV-A',
   province VARCHAR(100) DEFAULT 'Cavite',
   city VARCHAR(100) DEFAULT 'General Trias City',
@@ -32,31 +30,21 @@ CREATE TABLE IF NOT EXISTS school_info (
   year_established VARCHAR(20) DEFAULT '1894',
   principal_name VARCHAR(255) DEFAULT 'Mar T. Sta. Maria',
   principal_title VARCHAR(150) DEFAULT 'School Principal I',
-  motto TEXT,
+  motto TEXT DEFAULT 'Empowering Artemians with Quality, Excellence, Service, and Resilience',
   landline VARCHAR(50) DEFAULT '(046) 472-5307',
   mobile VARCHAR(50) DEFAULT '',
   email VARCHAR(255) DEFAULT '107960@deped.gov.ph',
   domain VARCHAR(255) DEFAULT 'garms107960.edu.ph',
   office_hours VARCHAR(255) DEFAULT 'Monday–Friday, 8:00 AM – 5:00 PM',
-  google_maps_link TEXT,
-  facebook_url TEXT,
-  youtube_url TEXT,
-  instagram_url TEXT,
-  tiktok_url TEXT,
+  google_maps_link TEXT DEFAULT 'https://maps.app.goo.gl/QBCD8vwwZJSNaMUE8',
+  facebook_url TEXT DEFAULT '',
+  youtube_url TEXT DEFAULT '',
+  instagram_url TEXT DEFAULT '',
+  tiktok_url TEXT DEFAULT '',
   logo_url VARCHAR(500) DEFAULT '/uploads/logo.png',
   principal_photo_url VARCHAR(500) DEFAULT '/uploads/principal.jpg',
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
-
-INSERT INTO school_info (
-  address, motto, google_maps_link, facebook_url, youtube_url, instagram_url, tiktok_url
-)
-SELECT
-  'Brgy. Bagumbayan, General Trias City, Cavite',
-  'Empowering Artemians with Quality, Excellence, Service, and Resilience',
-  'https://maps.app.goo.gl/QBCD8vwwZJSNaMUE8',
-  '', '', '', ''
-WHERE NOT EXISTS (SELECT 1 FROM school_info);
 
 -- Content blocks (Vision, Mission, History, Core Values, Goals, etc.)
 CREATE TABLE IF NOT EXISTS content_blocks (
@@ -71,12 +59,16 @@ CREATE TABLE IF NOT EXISTS content_blocks (
 );
 
 -- Homepage banner slider
+-- observance_tag: optional tag linking this slide to a seasonal observance (e.g. 'teachers_month')
+-- observance_label: human-readable label for the observance (e.g. 'National Teachers Month')
 CREATE TABLE IF NOT EXISTS banner_images (
   id INT AUTO_INCREMENT PRIMARY KEY,
   image_url VARCHAR(500) NOT NULL,
   caption VARCHAR(500),
   sort_order INT DEFAULT 0,
   is_active TINYINT(1) DEFAULT 1,
+  observance_tag VARCHAR(100) DEFAULT NULL,
+  observance_label VARCHAR(255) DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -102,9 +94,9 @@ CREATE TABLE IF NOT EXISTS officials (
   full_name VARCHAR(255) NOT NULL,
   position VARCHAR(255),
   department_office VARCHAR(255),
-  contact_no VARCHAR(100),
   photo_url VARCHAR(500),
-  sort_order INT DEFAULT 0
+  sort_order INT DEFAULT 0,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Faculty & Staff Directory
@@ -112,14 +104,15 @@ CREATE TABLE IF NOT EXISTS staff_directory (
   id INT AUTO_INCREMENT PRIMARY KEY,
   full_name VARCHAR(255) NOT NULL,
   position_subject VARCHAR(255),
-  section_name VARCHAR(100),
+  section_name VARCHAR(255),
   department_grade_level VARCHAR(100),
   years_in_service INT DEFAULT 0,
   contact_no VARCHAR(100),
   photo_url VARCHAR(500),
-  photo_match_status ENUM('matched','unmatched','pending_review') DEFAULT 'pending_review',
+  photo_match_status ENUM('matched','unmatched') DEFAULT 'unmatched',
   sort_order INT DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Committees
@@ -128,48 +121,20 @@ CREATE TABLE IF NOT EXISTS committees (
   committee_name VARCHAR(255) NOT NULL,
   description TEXT,
   file_url VARCHAR(500),
-  sort_order INT DEFAULT 0
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Committee members — photo_url added for visual identification on public page
 CREATE TABLE IF NOT EXISTS committee_members (
   id INT AUTO_INCREMENT PRIMARY KEY,
   committee_id INT NOT NULL,
   full_name VARCHAR(255) NOT NULL,
   role VARCHAR(255),
   contact_no VARCHAR(100),
+  photo_url VARCHAR(500) DEFAULT NULL,
   FOREIGN KEY (committee_id) REFERENCES committees(id) ON DELETE CASCADE
 );
-
--- Academic Programs
-CREATE TABLE IF NOT EXISTS academic_programs (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  grade_levels_offered TEXT,
-  special_programs TEXT,
-  cocurricular_activities TEXT,
-  notable_achievements TEXT,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-INSERT INTO academic_programs (grade_levels_offered)
-SELECT 'Kindergarten to Grade 6'
-WHERE NOT EXISTS (SELECT 1 FROM academic_programs);
-
--- Admissions / Enrollment
-CREATE TABLE IF NOT EXISTS enrollment_info (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  schedule TEXT,
-  requirements_richtext LONGTEXT,
-  process_richtext LONGTEXT,
-  fees_note TEXT,
-  contact_person VARCHAR(255),
-  contact_number VARCHAR(100),
-  online_enrollment_link TEXT,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-INSERT INTO enrollment_info (fees_note)
-SELECT 'Free / Public School'
-WHERE NOT EXISTS (SELECT 1 FROM enrollment_info);
 
 -- Programs, Projects & Activities
 CREATE TABLE IF NOT EXISTS ppas (
@@ -190,6 +155,18 @@ CREATE TABLE IF NOT EXISTS student_features (
   description TEXT,
   image_url VARCHAR(500),
   date_posted DATE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- School-wide Accomplishments (separate from Students' Corner)
+CREATE TABLE IF NOT EXISTS accomplishments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(500) NOT NULL,
+  description TEXT,
+  image_url VARCHAR(500),
+  award_date DATE,
+  awarding_body VARCHAR(500),
+  sort_order INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -234,11 +211,22 @@ CREATE TABLE IF NOT EXISTS external_links (
   sort_order INT DEFAULT 0
 );
 
--- Citizen's Charter
+-- Citizen's Charter — now a list of up to 16 individual PDF documents
+-- (replaces the old single-row citizens_charter table)
 CREATE TABLE IF NOT EXISTS citizens_charter (
   id INT AUTO_INCREMENT PRIMARY KEY,
   body_richtext LONGTEXT,
   pdf_file_url VARCHAR(500),
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS charter_documents (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(500) NOT NULL,
+  description TEXT,
+  pdf_url VARCHAR(500),
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
@@ -274,9 +262,9 @@ CREATE TABLE IF NOT EXISTS feedback_links (
 -- BOSY Enrollment Statistics
 CREATE TABLE IF NOT EXISTS enrollment_stats (
   id              INT AUTO_INCREMENT PRIMARY KEY,
-  school_year     VARCHAR(20) NOT NULL UNIQUE,   -- e.g. '2026-2027'
-  sort_order      INT DEFAULT 0,                 -- higher = newer; used for ordering
-  chart_image_url VARCHAR(500) DEFAULT NULL,      -- Cloudinary URL of official chart image
+  school_year     VARCHAR(20) NOT NULL UNIQUE,
+  sort_order      INT DEFAULT 0,
+  chart_image_url VARCHAR(500) DEFAULT NULL,
   kinder_male     INT NOT NULL DEFAULT 0,
   kinder_female   INT NOT NULL DEFAULT 0,
   grade1_male     INT NOT NULL DEFAULT 0,
@@ -304,4 +292,33 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   message TEXT NOT NULL,
   submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   is_read TINYINT(1) DEFAULT 0
+);
+
+-- School Dashboard Stats (single-row, admin-editable)
+CREATE TABLE IF NOT EXISTS school_dashboard (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  enrollment_count INT DEFAULT 0,
+  performance_indicator VARCHAR(500) DEFAULT '',
+  teaching_personnel INT DEFAULT 0,
+  non_teaching_personnel INT DEFAULT 0,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- School Dashboard: sections and classrooms per grade level
+CREATE TABLE IF NOT EXISTS school_dashboard_grades (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  grade_level VARCHAR(50) NOT NULL UNIQUE,
+  sections_count INT DEFAULT 0,
+  classrooms_count INT DEFAULT 0,
+  sort_order INT DEFAULT 0
+);
+
+-- Chronology of School Heads
+CREATE TABLE IF NOT EXISTS school_head_chronology (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  full_name VARCHAR(255) NOT NULL,
+  years_served VARCHAR(100),
+  photo_url VARCHAR(500) DEFAULT NULL,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
