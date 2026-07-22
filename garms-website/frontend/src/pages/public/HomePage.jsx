@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
@@ -66,10 +66,35 @@ const ArrowRightIcon = (p) => (
     <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
   </svg>
 );
+const ChevronLeftIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+const ChevronRightIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+const PauseIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...p}>
+    <rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" />
+  </svg>
+);
+const PlayIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...p}>
+    <path d="M8 5v14l11-7z" />
+  </svg>
+);
 const CalendarIcon = (p) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" />
     <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+const SparkleIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z" />
   </svg>
 );
 const BookOpenIcon = (p) => (
@@ -95,15 +120,41 @@ const DASH_ICONS = [
 ];
 
 export default function HomePage() {
+  const [info, setInfo] = useState(null);
   const [dashboard, setDashboard] = useState(null);
   const [ppas, setPpas] = useState([]);
   const [loadingDash, setLoadingDash] = useState(true);
 
+  const [banners, setBanners] = useState([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
+  const [currentBanner, setCurrentBanner] = useState(0);
+  const [autoplay, setAutoplay] = useState(true);
+
   useEffect(() => {
+    api.get('/school-info').then(r => setInfo(r.data)).catch(() => {});
     api.get('/school-dashboard').then(r => setDashboard(r.data)).catch(() => {}).finally(() => setLoadingDash(false));
     api.get('/ppas').then(r => setPpas(r.data.slice(0, 3))).catch(() => {});
+    // Fetch only seasonal banners — exclude general banners
+    api.get('/banners')
+      .then(r => {
+        const seasonal = (r.data || []).filter(b => b.type !== 'general');
+        setBanners(seasonal);
+      })
+      .catch(() => {})
+      .finally(() => setBannersLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (banners.length <= 1 || !autoplay) return;
+    const timer = setInterval(() => setCurrentBanner(p => (p + 1) % banners.length), 6000);
+    return () => clearInterval(timer);
+  }, [banners.length, autoplay]);
+
+  const goToBanner = useCallback((i) => { setCurrentBanner(i); setAutoplay(false); }, []);
+  const prevBanner = useCallback(() => setCurrentBanner(p => (p - 1 + banners.length) % banners.length), [banners.length]);
+  const nextBanner = useCallback(() => setCurrentBanner(p => (p + 1) % banners.length), [banners.length]);
+
+  const banner = banners[currentBanner];
   const dashStats = dashboard?.stats || {};
   const grades = dashboard?.grades || [];
 
@@ -114,8 +165,79 @@ export default function HomePage() {
     { label: 'Performance Indicator', value: dashStats.performance_indicator || '—', small: true },
   ];
 
+  const hasBanners = banners.length > 0;
+
   return (
     <div className="homepage">
+      {/* ============================================================
+          Hero — Seasonal Slideshow Only (general banner excluded)
+          ============================================================ */}
+      <section className="hero-slideshow" onMouseEnter={() => banners.length > 1 && setAutoplay(false)} onMouseLeave={() => banners.length > 1 && setAutoplay(true)}>
+        {bannersLoading ? (
+          <div className="hero-skeleton" aria-hidden="true" />
+        ) : hasBanners && banner ? (
+          <>
+            <div className="hero-slide-track">
+              {banners.map((b, i) => (
+                <div key={i} className={`hero-slide${i === currentBanner ? ' active' : ''}`} aria-hidden={i !== currentBanner}>
+                  <img src={getImageUrl(b.image_url)} alt={b.title || ''} className="hero-slide-img" onError={(e) => { e.target.style.display = 'none'; }} />
+                  <div className="hero-slide-overlay" />
+                </div>
+              ))}
+            </div>
+
+            <div className="hero-overlay-content container">
+              {info?.logo_url && (
+                <img src={getImageUrl(info.logo_url)} alt="GARMS Logo" className="hero-logo" onError={e => e.target.style.display = 'none'} />
+              )}
+              <div className="hero-text-block">
+                {banner.title && <span className="hero-eyebrow"><SparkleIcon className="hero-eyebrow-icon" />{banner.title}</span>}
+                <h1 className="hero-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
+                <p className="hero-subtitle">{info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}</p>
+                <div className="hero-actions">
+                  <Link to="/admissions" className="btn btn-primary btn-lg">Enroll Now<ArrowRightIcon className="btn-icon" /></Link>
+                  <Link to="/about" className="btn btn-outline-light btn-lg">Learn More</Link>
+                </div>
+              </div>
+            </div>
+
+            {banners.length > 1 && (
+              <>
+                <button className="hero-nav hero-nav-prev" onClick={prevBanner} aria-label="Previous banner"><ChevronLeftIcon /></button>
+                <button className="hero-nav hero-nav-next" onClick={nextBanner} aria-label="Next banner"><ChevronRightIcon /></button>
+                <div className="hero-controls">
+                  <button type="button" className="hero-toggle" onClick={() => setAutoplay(a => !a)} aria-label={autoplay ? 'Pause slideshow' : 'Play slideshow'} title={autoplay ? 'Pause' : 'Play'}>
+                    {autoplay ? <PauseIcon className="hero-toggle-icon" /> : <PlayIcon className="hero-toggle-icon" />}
+                  </button>
+                  <div className="hero-dots" role="tablist" aria-label="Banner navigation">
+                    {banners.map((_, i) => (
+                      <button key={i} role="tab" aria-selected={i === currentBanner} aria-label={`Show banner ${i + 1}`} className={`hero-dot${i === currentBanner ? ' active' : ''}`} onClick={() => goToBanner(i)} />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          /* Fallback when no seasonal banners — gradient hero with school info */
+          <div className="hero-fallback" aria-hidden="true">
+            <div className="hero-fallback-pattern" />
+            <div className="hero-overlay-content container">
+              {info?.logo_url && <img src={getImageUrl(info.logo_url)} alt="GARMS Logo" className="hero-logo" onError={e => e.target.style.display = 'none'} />}
+              <div className="hero-text-block">
+                <span className="hero-eyebrow"><SparkleIcon className="hero-eyebrow-icon" />Welcome to GARMS</span>
+                <h1 className="hero-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
+                <p className="hero-subtitle">{info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}</p>
+                <div className="hero-actions">
+                  <Link to="/admissions" className="btn btn-primary btn-lg">Enroll Now<ArrowRightIcon className="btn-icon" /></Link>
+                  <Link to="/about" className="btn btn-outline-light btn-lg">Learn More</Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
       {/* ============================================================
           School Dashboard
           ============================================================ */}
