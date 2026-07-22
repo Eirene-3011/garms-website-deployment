@@ -4,8 +4,7 @@ import { useSchoolInfo } from '../../hooks/useSchoolInfo';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
 import './Header.css';
-import '../HomePage/HomePage.css'; // reuse the hero-slideshow styles used on the homepage
-
+import '../../pages/public/HomePage.css'; // reuse the hero-slideshow styles used on the homepage
 // Custom SVG Icons
 const ChevronDownIcon = (p) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="icon" {...p}>
