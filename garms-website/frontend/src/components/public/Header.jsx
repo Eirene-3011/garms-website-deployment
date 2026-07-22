@@ -4,7 +4,7 @@ import { useSchoolInfo } from '../../hooks/useSchoolInfo';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
 import './Header.css';
-import '../../pages/public/HomePage.css'; // reuse the hero-slideshow styles used on the homepage
+
 // Custom SVG Icons
 const ChevronDownIcon = (p) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="icon" {...p}>
@@ -101,15 +101,15 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
 
-  // Single general banner (no slideshow) — used as the hero background image
+  // Single general banner — no slideshow/carousel, just the one "general" banner
   const [banner, setBanner] = useState(null);
   const [bannerLoading, setBannerLoading] = useState(true);
 
   useEffect(() => {
     api.get('/banners')
-      .then(r => {
-        console.log('BANNERS RESPONSE:', r.data); // TEMP: confirm the API returns a general banner with image_url
-        const general = (r.data || []).find(b => b.type === 'general');
+      .then((r) => {
+        const data = r.data || [];
+        const general = data.find((b) => b.type === 'general');
         setBanner(general || null);
       })
       .catch((err) => console.error('Banner fetch failed:', err))
@@ -156,21 +156,19 @@ export default function Header() {
 
   return (
     <>
-      {/* Hero — single general banner as background, no slideshow */}
-      <section className="hero-slideshow">
+      {/* Hero banner — single general banner, full width, no slideshow */}
+      <div className="header-hero">
         {bannerLoading ? (
-          <div className="hero-skeleton" aria-hidden="true" />
+          <div className="hero-banner-skeleton" aria-hidden="true" />
         ) : banner ? (
-          <>
-            <div className="hero-slide active">
-              <img
-                src={getImageUrl(banner.image_url)}
-                alt={banner.title || ''}
-                className="hero-slide-img"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-              <div className="hero-slide-overlay" />
-            </div>
+          <div className="hero-banner-frame">
+            <img
+              src={getImageUrl(banner.image_url)}
+              alt={banner.title || ''}
+              className="hero-banner-img"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+            <div className="hero-slide-overlay" />
 
             <div className="hero-overlay-content container">
               {info?.logo_url && (
@@ -195,10 +193,10 @@ export default function Header() {
                 </div>
               </div>
             </div>
-          </>
+          </div>
         ) : (
           /* Fallback when no general banner is set — gradient hero with school info */
-          <div className="hero-fallback" aria-hidden="true">
+          <div className="hero-banner-fallback" aria-hidden="true">
             <div className="hero-fallback-pattern" />
             <div className="hero-overlay-content container">
               {info?.logo_url && (
@@ -221,7 +219,7 @@ export default function Header() {
             </div>
           </div>
         )}
-      </section>
+      </div>
 
       {/* Navigation */}
       <nav className={`navbar${scrolled ? ' navbar-sticky' : ''}`} ref={dropdownRef}>
