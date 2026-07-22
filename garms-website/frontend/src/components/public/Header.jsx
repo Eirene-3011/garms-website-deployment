@@ -114,7 +114,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
 
-  // Banner carousel (moved over from HomePage — same data/behavior)
+  // Banner carousel — header shows ONLY the general banner (seasonal banners are excluded here)
   const [banners, setBanners] = useState([]);
   const [bannersLoading, setBannersLoading] = useState(true);
   const [currentBanner, setCurrentBanner] = useState(0);
@@ -123,8 +123,8 @@ export default function Header() {
   useEffect(() => {
     api.get('/banners')
       .then(r => {
-        // Only show general banners in the header carousel — seasonal banners are excluded here.
-        const generalOnly = (r.data || []).filter(b => b.banner_type === 'general');
+        // Field is `type` on the banner record; general banners have type === 'general'
+        const generalOnly = (r.data || []).filter(b => b.type === 'general');
         setBanners(generalOnly);
       })
       .catch(() => {})
