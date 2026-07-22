@@ -122,7 +122,11 @@ export default function Header() {
 
   useEffect(() => {
     api.get('/banners')
-      .then(r => setBanners(r.data))
+      .then(r => {
+        // Only show general banners in the header carousel — seasonal banners are excluded here.
+        const generalOnly = (r.data || []).filter(b => b.banner_type === 'general');
+        setBanners(generalOnly);
+      })
       .catch(() => {})
       .finally(() => setBannersLoading(false));
   }, []);
