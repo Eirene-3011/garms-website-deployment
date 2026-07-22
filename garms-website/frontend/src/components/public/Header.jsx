@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSchoolInfo } from '../../hooks/useSchoolInfo';
 import api from '../../utils/api';
@@ -34,27 +34,6 @@ const ArrowRightIcon = (p) => (
 const SparkleIcon = (p) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z" />
-  </svg>
-);
-
-const ChevronLeftIcon = (p) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <polyline points="15 18 9 12 15 6" />
-  </svg>
-);
-const ChevronRightIcon = (p) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <polyline points="9 18 15 12 9 6" />
-  </svg>
-);
-const PauseIcon = (p) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...p}>
-    <rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" />
-  </svg>
-);
-const PlayIcon = (p) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...p}>
-    <path d="M8 5v14l11-7z" />
   </svg>
 );
 
@@ -122,35 +101,20 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
 
-  // Hero slideshow — moved in from HomePage (seasonal banners only, general excluded)
-  const [banners, setBanners] = useState([]);
-  const [bannersLoading, setBannersLoading] = useState(true);
-  const [currentBanner, setCurrentBanner] = useState(0);
-  const [autoplay, setAutoplay] = useState(true);
+  // Single general banner — no slideshow/carousel, just the one "general" banner
+  const [banner, setBanner] = useState(null);
+  const [bannerLoading, setBannerLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch only seasonal banners — exclude general banners
     api.get('/banners')
-      .then(r => {
-        const seasonal = (r.data || []).filter(b => b.type !== 'general');
-        setBanners(seasonal);
+      .then((r) => {
+        const data = r.data || [];
+        const general = data.find((b) => b.type === 'general');
+        setBanner(general || null);
       })
-      .catch(() => {})
-      .finally(() => setBannersLoading(false));
+      .catch((err) => console.error('Banner fetch failed:', err))
+      .finally(() => setBannerLoading(false));
   }, []);
-
-  useEffect(() => {
-    if (banners.length <= 1 || !autoplay) return;
-    const timer = setInterval(() => setCurrentBanner(p => (p + 1) % banners.length), 6000);
-    return () => clearInterval(timer);
-  }, [banners.length, autoplay]);
-
-  const goToBanner = useCallback((i) => { setCurrentBanner(i); setAutoplay(false); }, []);
-  const prevBanner = useCallback(() => setCurrentBanner(p => (p - 1 + banners.length) % banners.length), [banners.length]);
-  const nextBanner = useCallback(() => setCurrentBanner(p => (p + 1) % banners.length), [banners.length]);
-
-  const banner = banners[currentBanner];
-  const hasBanners = banners.length > 0;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -192,30 +156,35 @@ export default function Header() {
 
   return (
     <>
-      {/* ============================================================
-          Hero — Seasonal Slideshow Only (general banner excluded)
-          Moved in from HomePage.jsx
-          ============================================================ */}
-      <section className="hero-slideshow" onMouseEnter={() => banners.length > 1 && setAutoplay(false)} onMouseLeave={() => banners.length > 1 && setAutoplay(true)}>
-        {bannersLoading ? (
-          <div className="hero-skeleton" aria-hidden="true" />
-        ) : hasBanners && banner ? (
-          <>
-            <div className="hero-slide-track">
-              {banners.map((b, i) => (
-                <div key={i} className={`hero-slide${i === currentBanner ? ' active' : ''}`} aria-hidden={i !== currentBanner}>
-                  <img src={getImageUrl(b.image_url)} alt={b.title || ''} className="hero-slide-img" onError={(e) => { e.target.style.display = 'none'; }} />
-                  <div className="hero-slide-overlay" />
-                </div>
-              ))}
-            </div>
+      {/* Hero banner — single general banner, full width, no slideshow */}
+      <div className="header-hero">
+        {bannerLoading ? (
+          <div className="hero-banner-skeleton" aria-hidden="true" />
+        ) : banner ? (
+          <div className="hero-banner-frame">
+            <img
+              src={getImageUrl(banner.image_url)}
+              alt={banner.title || ''}
+              className="hero-banner-img"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+            <div className="hero-slide-overlay" />
 
             <div className="hero-overlay-content container">
               {info?.logo_url && (
-                <img src={getImageUrl(info.logo_url)} alt="GARMS Logo" className="hero-logo" onError={e => e.target.style.display = 'none'} />
+                <img
+                  src={getImageUrl(info.logo_url)}
+                  alt="GARMS Logo"
+                  className="hero-logo"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
               )}
               <div className="hero-text-block">
-                {banner.title && <span className="hero-eyebrow"><SparkleIcon className="hero-eyebrow-icon" />{banner.title}</span>}
+                {banner.title && (
+                  <span className="hero-eyebrow">
+                    <SparkleIcon className="hero-eyebrow-icon" />{banner.title}
+                  </span>
+                )}
                 <h1 className="hero-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
                 <p className="hero-subtitle">{info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}</p>
                 <div className="hero-actions">
@@ -224,30 +193,20 @@ export default function Header() {
                 </div>
               </div>
             </div>
-
-            {banners.length > 1 && (
-              <>
-                <button className="hero-nav hero-nav-prev" onClick={prevBanner} aria-label="Previous banner"><ChevronLeftIcon /></button>
-                <button className="hero-nav hero-nav-next" onClick={nextBanner} aria-label="Next banner"><ChevronRightIcon /></button>
-                <div className="hero-controls">
-                  <button type="button" className="hero-toggle" onClick={() => setAutoplay(a => !a)} aria-label={autoplay ? 'Pause slideshow' : 'Play slideshow'} title={autoplay ? 'Pause' : 'Play'}>
-                    {autoplay ? <PauseIcon className="hero-toggle-icon" /> : <PlayIcon className="hero-toggle-icon" />}
-                  </button>
-                  <div className="hero-dots" role="tablist" aria-label="Banner navigation">
-                    {banners.map((_, i) => (
-                      <button key={i} role="tab" aria-selected={i === currentBanner} aria-label={`Show banner ${i + 1}`} className={`hero-dot${i === currentBanner ? ' active' : ''}`} onClick={() => goToBanner(i)} />
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </>
+          </div>
         ) : (
-          /* Fallback when no seasonal banners — gradient hero with school info */
-          <div className="hero-fallback" aria-hidden="true">
+          /* Fallback when no general banner is set — gradient hero with school info */
+          <div className="hero-banner-fallback" aria-hidden="true">
             <div className="hero-fallback-pattern" />
             <div className="hero-overlay-content container">
-              {info?.logo_url && <img src={getImageUrl(info.logo_url)} alt="GARMS Logo" className="hero-logo" onError={e => e.target.style.display = 'none'} />}
+              {info?.logo_url && (
+                <img
+                  src={getImageUrl(info.logo_url)}
+                  alt="GARMS Logo"
+                  className="hero-logo"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              )}
               <div className="hero-text-block">
                 <span className="hero-eyebrow"><SparkleIcon className="hero-eyebrow-icon" />Welcome to GARMS</span>
                 <h1 className="hero-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
@@ -260,7 +219,7 @@ export default function Header() {
             </div>
           </div>
         )}
-      </section>
+      </div>
 
       {/* Navigation */}
       <nav className={`navbar${scrolled ? ' navbar-sticky' : ''}`} ref={dropdownRef}>
