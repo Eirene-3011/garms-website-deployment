@@ -4,6 +4,7 @@ import { useSchoolInfo } from '../../hooks/useSchoolInfo';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
 import './Header.css';
+import '../HomePage/HomePage.css'; // reuse the hero-slideshow styles used on the homepage
 
 // Custom SVG Icons
 const ChevronDownIcon = (p) => (
@@ -108,10 +109,11 @@ export default function Header() {
   useEffect(() => {
     api.get('/banners')
       .then(r => {
+        console.log('BANNERS RESPONSE:', r.data); // TEMP: confirm the API returns a general banner with image_url
         const general = (r.data || []).find(b => b.type === 'general');
         setBanner(general || null);
       })
-      .catch(() => {})
+      .catch((err) => console.error('Banner fetch failed:', err))
       .finally(() => setBannerLoading(false));
   }, []);
 
