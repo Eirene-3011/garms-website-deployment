@@ -1,18 +1,164 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
+import './HomePage.css';
+
+/* ================================================================
+   SVG Icon Components (replacing all emojis)
+   ================================================================ */
+const UsersIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+const UserCheckIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="8.5" cy="7" r="4" />
+    <polyline points="17 11 19 13 23 9" />
+  </svg>
+);
+
+const BuildingIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <rect x="4" y="2" width="16" height="20" rx="2" />
+    <path d="M9 22v-4h6v4" />
+    <path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01" />
+  </svg>
+);
+
+const TrendingUpIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+    <polyline points="17 6 23 6 23 12" />
+  </svg>
+);
+
+const SchoolIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+    <path d="M6 12v5c3 3 9 3 12 0v-5" />
+  </svg>
+);
+
+const ClipboardIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+  </svg>
+);
+
+const GraduationIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+    <path d="M6 12v5c3 3 9 3 12 0v-5" />
+  </svg>
+);
+
+const TrophyIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+    <path d="M4 22h16" />
+    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+  </svg>
+);
+
+const StarIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
+const PhoneIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+  </svg>
+);
+
+const ArrowRightIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </svg>
+);
+
+const ChevronLeftIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+
+const ChevronRightIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+const PauseIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...p}>
+    <rect x="6" y="5" width="4" height="14" rx="1" />
+    <rect x="14" y="5" width="4" height="14" rx="1" />
+  </svg>
+);
+
+const PlayIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...p}>
+    <path d="M8 5v14l11-7z" />
+  </svg>
+);
+
+const CalendarIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
+/* ================================================================
+   Quick Link config with SVG icons and accent colors
+   ================================================================ */
+const QUICK_LINKS = [
+  { label: 'About GARMS', desc: 'School profile & history', path: '/about', Icon: SchoolIcon, accent: 'red' },
+  { label: 'Admissions', desc: 'Enrollment information', path: '/admissions', Icon: ClipboardIcon, accent: 'blue' },
+  { label: 'Programs & Activities', desc: 'PPAs and events', path: '/ppas', Icon: GraduationIcon, accent: 'green' },
+  { label: 'Accomplishments', desc: 'Awards & achievements', path: '/accomplishments', Icon: TrophyIcon, accent: 'purple' },
+  { label: "Students' Corner", desc: 'Featured students', path: '/students-corner', Icon: StarIcon, accent: 'orange' },
+  { label: 'Contact Us', desc: 'Get in touch', path: '/contact', Icon: PhoneIcon, accent: 'teal' },
+];
+
+const DASH_ICONS = [
+  { Icon: UsersIcon, accent: 'red' },
+  { Icon: UserCheckIcon, accent: 'blue' },
+  { Icon: BuildingIcon, accent: 'green' },
+  { Icon: TrendingUpIcon, accent: 'purple' },
+];
 
 /**
- * HomePage — main landing page.
- * Includes: Hero (banners handled by Header), School Dashboard section,
- * latest PPAs, quick-access cards.
+ * HomePage — Enhanced landing page.
+ * Banner slideshow adapted from Header, school dashboard,
+ * quick-access cards, and recent PPAs.
  */
 export default function HomePage() {
   const [info, setInfo] = useState(null);
   const [dashboard, setDashboard] = useState(null);
   const [ppas, setPpas] = useState([]);
   const [loadingDash, setLoadingDash] = useState(true);
+
+  // Banner slideshow state (adapted from Header)
+  const [banners, setBanners] = useState([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
+  const [currentBanner, setCurrentBanner] = useState(0);
+  const [autoplay, setAutoplay] = useState(true);
 
   useEffect(() => {
     api.get('/school-info').then(r => setInfo(r.data)).catch(() => {});
@@ -21,103 +167,228 @@ export default function HomePage() {
       .catch(() => {})
       .finally(() => setLoadingDash(false));
     api.get('/ppas').then(r => setPpas(r.data.slice(0, 3))).catch(() => {});
+    api.get('/banners')
+      .then(r => setBanners(r.data))
+      .catch(() => {})
+      .finally(() => setBannersLoading(false));
   }, []);
 
+  // Autoplay timer
+  useEffect(() => {
+    if (banners.length <= 1 || !autoplay) return;
+    const timer = setInterval(() => setCurrentBanner(p => (p + 1) % banners.length), 6000);
+    return () => clearInterval(timer);
+  }, [banners.length, autoplay]);
+
+  const goToBanner = useCallback((i) => {
+    setCurrentBanner(i);
+    setAutoplay(false);
+  }, []);
+
+  const prevBanner = useCallback(() => {
+    setCurrentBanner(p => (p - 1 + banners.length) % banners.length);
+  }, [banners.length]);
+
+  const nextBanner = useCallback(() => {
+    setCurrentBanner(p => (p + 1) % banners.length);
+  }, [banners.length]);
+
+  const banner = banners[currentBanner];
   const dashStats = dashboard?.stats || {};
   const grades = dashboard?.grades || [];
 
-  const quickLinks = [
-    { label: 'About GARMS', path: '/about', icon: '🏫' },
-    { label: 'Admissions', path: '/admissions', icon: '📋' },
-    { label: 'Programs & Activities', path: '/ppas', icon: '🎓' },
-    { label: 'Accomplishments', path: '/accomplishments', icon: '🏆' },
-    { label: "Students' Corner", path: '/students-corner', icon: '⭐' },
-    { label: 'Contact Us', path: '/contact', icon: '📞' },
+  const dashItems = [
+    { label: 'Total Enrollment', value: dashStats.enrollment_count?.toLocaleString() || '—', small: false },
+    { label: 'Teaching Personnel', value: dashStats.teaching_personnel || '—', small: false },
+    { label: 'Non-Teaching Personnel', value: dashStats.non_teaching_personnel || '—', small: false },
+    { label: 'Performance Indicator', value: dashStats.performance_indicator || '—', small: true },
   ];
 
   return (
-    <div>
-      {/* Welcome strip */}
-      <section className="section" style={{ background: 'var(--gray-50)', paddingTop: 48, paddingBottom: 48 }}>
-        <div className="container" style={{ textAlign: 'center' }}>
-          {info?.logo_url && (
-            <img
-              src={getImageUrl(info.logo_url)}
-              alt="GARMS"
-              style={{ width: 96, height: 96, objectFit: 'contain', borderRadius: '50%', marginBottom: 20 }}
-              onError={e => e.target.style.display = 'none'}
-            />
-          )}
-          <h1 style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)', fontWeight: 900, color: 'var(--gray-900)', marginBottom: 12 }}>
-            {info?.school_name || 'General Artemio Ricarte Memorial School'}
-          </h1>
-          <p style={{ fontSize: '0.95rem', color: 'var(--gray-600)', maxWidth: 600, margin: '0 auto 28px' }}>
-            {info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}
-          </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/admissions" className="btn btn-primary btn-lg">Enroll Now</Link>
-            <Link to="/about" className="btn btn-outline btn-lg">Learn More</Link>
+    <div className="homepage">
+      {/* ============================================================
+          Hero Slideshow Section (adapted from Header banner carousel)
+          ============================================================ */}
+      <section className="hero-slideshow" onMouseEnter={() => setAutoplay(false)} onMouseLeave={() => setAutoplay(true)}>
+        {bannersLoading ? (
+          <div className="hero-skeleton" aria-hidden="true" />
+        ) : banner ? (
+          <>
+            <div className="hero-slide-track">
+              {banners.map((b, i) => (
+                <div
+                  key={i}
+                  className={`hero-slide${i === currentBanner ? ' active' : ''}`}
+                  aria-hidden={i !== currentBanner}
+                >
+                  <img
+                    src={getImageUrl(b.image_url)}
+                    alt={b.title || ''}
+                    className="hero-slide-img"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                  <div className="hero-slide-overlay" />
+                </div>
+              ))}
+            </div>
+
+            {/* Hero content overlay */}
+            <div className="hero-overlay-content container">
+              {info?.logo_url && (
+                <img
+                  src={getImageUrl(info.logo_url)}
+                  alt="GARMS Logo"
+                  className="hero-logo"
+                  onError={e => e.target.style.display = 'none'}
+                />
+              )}
+              <div className="hero-text-block">
+                {banner.title && (
+                  <span className="hero-eyebrow">{banner.title}</span>
+                )}
+                <h1 className="hero-title">
+                  {info?.school_name || 'General Artemio Ricarte Memorial School'}
+                </h1>
+                <p className="hero-subtitle">
+                  {info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}
+                </p>
+                <div className="hero-actions">
+                  <Link to="/admissions" className="btn btn-primary btn-lg">
+                    Enroll Now
+                    <ArrowRightIcon className="btn-icon" />
+                  </Link>
+                  <Link to="/about" className="btn btn-outline-light btn-lg">Learn More</Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Slideshow controls */}
+            {banners.length > 1 && (
+              <>
+                <button className="hero-nav hero-nav-prev" onClick={prevBanner} aria-label="Previous banner">
+                  <ChevronLeftIcon />
+                </button>
+                <button className="hero-nav hero-nav-next" onClick={nextBanner} aria-label="Next banner">
+                  <ChevronRightIcon />
+                </button>
+                <div className="hero-controls">
+                  <button
+                    type="button"
+                    className="hero-toggle"
+                    onClick={() => setAutoplay(a => !a)}
+                    aria-label={autoplay ? 'Pause slideshow' : 'Play slideshow'}
+                    title={autoplay ? 'Pause' : 'Play'}
+                  >
+                    {autoplay ? <PauseIcon className="hero-toggle-icon" /> : <PlayIcon className="hero-toggle-icon" />}
+                  </button>
+                  <div className="hero-dots" role="tablist" aria-label="Banner navigation">
+                    {banners.map((_, i) => (
+                      <button
+                        key={i}
+                        role="tab"
+                        aria-selected={i === currentBanner}
+                        aria-label={`Show banner ${i + 1}`}
+                        className={`hero-dot${i === currentBanner ? ' active' : ''}`}
+                        onClick={() => goToBanner(i)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <div className="hero-fallback" aria-hidden="true">
+            <div className="hero-overlay-content container">
+              {info?.logo_url && (
+                <img
+                  src={getImageUrl(info.logo_url)}
+                  alt="GARMS Logo"
+                  className="hero-logo"
+                  onError={e => e.target.style.display = 'none'}
+                />
+              )}
+              <div className="hero-text-block">
+                <h1 className="hero-title">
+                  {info?.school_name || 'General Artemio Ricarte Memorial School'}
+                </h1>
+                <p className="hero-subtitle">
+                  {info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}
+                </p>
+                <div className="hero-actions">
+                  <Link to="/admissions" className="btn btn-primary btn-lg">
+                    Enroll Now
+                    <ArrowRightIcon className="btn-icon" />
+                  </Link>
+                  <Link to="/about" className="btn btn-outline-light btn-lg">Learn More</Link>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
-      {/* School Dashboard */}
-      <section className="section">
+      {/* ============================================================
+          School Dashboard — KPIs + Grade Breakdown
+          ============================================================ */}
+      <section className="section dashboard-section">
         <div className="container">
-          <span className="section-eyebrow">By the Numbers</span>
-          <h2 className="section-title">School Dashboard</h2>
-          <p className="section-subtitle">Key statistics and performance indicators for the current school year.</p>
+          <div className="section-header">
+            <span className="section-eyebrow">By the Numbers</span>
+            <h2 className="section-title">School Dashboard</h2>
+            <p className="section-subtitle">Key statistics and performance indicators for the current school year.</p>
+          </div>
 
           {loadingDash ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
+            <div className="kpi-grid">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="card" style={{ padding: '24px 28px', textAlign: 'center' }}>
-                  <div className="skeleton" style={{ width: '60%', height: 40, margin: '0 auto 12px' }} />
-                  <div className="skeleton" style={{ width: '80%', height: 14, margin: '0 auto' }} />
+                <div key={i} className="kpi-card kpi-skeleton">
+                  <div className="skeleton skeleton-icon" />
+                  <div className="skeleton skeleton-num" />
+                  <div className="skeleton skeleton-label" />
                 </div>
               ))}
             </div>
           ) : (
             <>
-              {/* Main KPIs */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20, marginBottom: 28 }}>
-                {[
-                  { label: 'Total Enrollment', value: dashStats.enrollment_count?.toLocaleString() || '—', icon: '👨‍🎓' },
-                  { label: 'Teaching Personnel', value: dashStats.teaching_personnel || '—', icon: '👨‍🏫' },
-                  { label: 'Non-Teaching Personnel', value: dashStats.non_teaching_personnel || '—', icon: '🏢' },
-                  { label: 'Performance Indicator', value: dashStats.performance_indicator || '—', icon: '📈', small: true },
-                ].map(item => (
-                  <div key={item.label} className="card" style={{ padding: '24px 20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.8rem', marginBottom: 8 }}>{item.icon}</div>
-                    <p style={{ fontSize: item.small ? '0.9rem' : '1.8rem', fontWeight: 900, color: 'var(--red-primary)', lineHeight: 1.2, marginBottom: 6 }}>
-                      {item.value}
-                    </p>
-                    <p style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{item.label}</p>
-                  </div>
-                ))}
+              {/* KPI Cards */}
+              <div className="kpi-grid">
+                {dashItems.map((item, i) => {
+                  const { Icon, accent } = DASH_ICONS[i];
+                  return (
+                    <div key={item.label} className={`kpi-card accent-${accent}`}>
+                      <div className="kpi-icon-wrap">
+                        <Icon className="kpi-icon" />
+                      </div>
+                      <p className={`kpi-value${item.small ? ' kpi-value-sm' : ''}`}>{item.value}</p>
+                      <p className="kpi-label">{item.label}</p>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* Grade-level breakdown */}
+              {/* Grade-level breakdown table */}
               {grades.length > 0 && (
-                <div className="card" style={{ padding: '24px 28px' }}>
-                  <h3 style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--gray-700)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>
-                    Grade-Level Breakdown
-                  </h3>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                <div className="grade-table-card">
+                  <div className="grade-table-header">
+                    <CalendarIcon className="grade-table-icon" />
+                    <h3>Grade-Level Breakdown</h3>
+                  </div>
+                  <div className="grade-table-wrap">
+                    <table className="grade-table">
                       <thead>
-                        <tr style={{ background: 'var(--gray-50)' }}>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--gray-600)', borderBottom: '1px solid var(--gray-200)' }}>Grade Level</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, color: 'var(--gray-600)', borderBottom: '1px solid var(--gray-200)' }}>Sections</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, color: 'var(--gray-600)', borderBottom: '1px solid var(--gray-200)' }}>Classrooms</th>
+                        <tr>
+                          <th>Grade Level</th>
+                          <th className="td-center">Sections</th>
+                          <th className="td-center">Classrooms</th>
                         </tr>
                       </thead>
                       <tbody>
                         {grades.map(g => (
-                          <tr key={g.grade_level} style={{ borderBottom: '1px solid var(--gray-100)' }}>
-                            <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--gray-900)' }}>{g.grade_level}</td>
-                            <td style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--gray-700)' }}>{g.sections_count}</td>
-                            <td style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--gray-700)' }}>{g.classrooms_count}</td>
+                          <tr key={g.grade_level}>
+                            <td className="td-bold">{g.grade_level}</td>
+                            <td className="td-center">{g.sections_count}</td>
+                            <td className="td-center">{g.classrooms_count}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -130,46 +401,68 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Quick Links */}
-      <section className="section" style={{ background: 'var(--gray-50)', paddingTop: 48, paddingBottom: 48 }}>
+      {/* ============================================================
+          Quick Access Cards
+          ============================================================ */}
+      <section className="section quick-links-section">
         <div className="container">
-          <span className="section-eyebrow">Navigate</span>
-          <h2 className="section-title">Quick Access</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
-            {quickLinks.map(l => (
-              <Link key={l.label} to={l.path} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
-                padding: '24px 16px', background: 'white', borderRadius: 12,
-                border: '1px solid var(--gray-200)', textDecoration: 'none',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.05)', transition: 'all 0.2s',
-              }}>
-                <span style={{ fontSize: '2rem' }}>{l.icon}</span>
-                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--gray-800)', textAlign: 'center', lineHeight: 1.3 }}>{l.label}</span>
+          <div className="section-header">
+            <span className="section-eyebrow">Navigate</span>
+            <h2 className="section-title">Quick Access</h2>
+            <p className="section-subtitle">Jump directly to the most visited sections of our portal.</p>
+          </div>
+          <div className="quick-links-grid">
+            {QUICK_LINKS.map(({ label, desc, path, Icon, accent }) => (
+              <Link key={label} to={path} className={`quick-link-card accent-${accent}`}>
+                <div className="ql-icon-wrap">
+                  <Icon className="ql-icon" />
+                </div>
+                <div className="ql-body">
+                  <span className="ql-label">{label}</span>
+                  <span className="ql-desc">{desc}</span>
+                </div>
+                <ArrowRightIcon className="ql-arrow" />
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Recent PPAs */}
+      {/* ============================================================
+          Recent PPAs
+          ============================================================ */}
       {ppas.length > 0 && (
-        <section className="section">
+        <section className="section ppas-section">
           <div className="container">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
-              <div>
+            <div className="section-row">
+              <div className="section-header section-header-left">
                 <span className="section-eyebrow">What's happening</span>
-                <h2 className="section-title" style={{ marginBottom: 0 }}>Programs &amp; Activities</h2>
+                <h2 className="section-title">Programs &amp; Activities</h2>
               </div>
-              <Link to="/ppas" style={{ color: 'var(--red-primary)', fontWeight: 700, fontSize: '0.88rem' }}>View All →</Link>
+              <Link to="/ppas" className="view-all-link">
+                View All
+                <ArrowRightIcon className="view-all-icon" />
+              </Link>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+            <div className="ppas-grid">
               {ppas.map(p => (
-                <div key={p.id} className="card" style={{ overflow: 'hidden' }}>
+                <div key={p.id} className="ppa-card">
                   {p.image_url && (
-                    <img src={getImageUrl(p.image_url)} alt={p.name} style={{ width: '100%', height: 180, objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
+                    <div className="ppa-image-wrap">
+                      <img
+                        src={getImageUrl(p.image_url)}
+                        alt={p.name}
+                        className="ppa-image"
+                        onError={e => e.target.style.display = 'none'}
+                      />
+                    </div>
                   )}
-                  <div style={{ padding: '16px 20px' }}>
-                    <h3 style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--gray-900)', margin: 0 }}>{p.name}</h3>
+                  <div className="ppa-body">
+                    <h3 className="ppa-name">{p.name}</h3>
+                    <Link to="/ppas" className="ppa-link">
+                      Read more
+                      <ArrowRightIcon className="ppa-link-icon" />
+                    </Link>
                   </div>
                 </div>
               ))}
@@ -177,6 +470,26 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ============================================================
+          Call to Action
+          ============================================================ */}
+      <section className="cta-section">
+        <div className="cta-pattern" />
+        <div className="container cta-inner">
+          <div className="cta-text">
+            <h2>Ready to join the GARMS community?</h2>
+            <p>Take the first step toward quality education. Enroll today or reach out to learn more about our programs and offerings.</p>
+          </div>
+          <div className="cta-actions">
+            <Link to="/admissions" className="btn btn-primary btn-lg">
+              Enroll Now
+              <ArrowRightIcon className="btn-icon" />
+            </Link>
+            <Link to="/contact" className="btn btn-outline-light btn-lg">Contact Us</Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
