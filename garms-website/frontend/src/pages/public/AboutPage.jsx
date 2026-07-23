@@ -133,55 +133,11 @@ export default function AboutPage() {
       <div className="page-header">
         <span className="hero-monogram" aria-hidden="true">G</span>
         <div className="container">
-          <div className="breadcrumb"><Link to="/">Home</Link> › About Us</div>
           <h1>About GARMS</h1>
         </div>
       </div>
 
-      {/* School info tiles */}
-      <section className="section-sm surface-grid" style={{ background: 'var(--gray-50)' }}>
-        <div className="container">
-          <div className="facts-shell card">
-            <div className="facts-shell-head">
-              <span className="section-eyebrow">
-                <IconHash size={14} />
-                Quick Facts
-              </span>
-            </div>
 
-            {loading ? (
-              <div className="info-panel">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div className="info-tile" key={i}>
-                    <div className="skeleton" style={{ width: '50%', height: 10, marginBottom: 10 }} />
-                    <div className="skeleton" style={{ width: '80%', height: 14 }} />
-                  </div>
-                ))}
-              </div>
-            ) : info && (
-              <div className="info-panel">
-                {infoRows.map((r, i) => (
-                  <div
-                    key={r.label}
-                    className="info-tile reveal-target"
-                    style={{ transitionDelay: `${i * 40}ms` }}
-                  >
-                    <div className="info-tile-head">
-                      <span className="info-tile-icon"><r.Icon size={16} /></span>
-                      <p className="info-tile-label">{r.label}</p>
-                    </div>
-                    {r.badge ? (
-                      <span className="badge badge-red">{r.val || '—'}</span>
-                    ) : (
-                      <p className={`info-tile-value${r.mono ? ' font-mono' : ''}`}>{r.val || '—'}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
 
       {/* School Profile: sidebar table of contents + section cards */}
       <section className="section">
