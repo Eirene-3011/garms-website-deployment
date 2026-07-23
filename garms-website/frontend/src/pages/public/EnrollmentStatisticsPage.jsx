@@ -1,44 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
+import { getImageUrl } from '../../utils/helpers';
 
-const GRADE_ORDER = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'];
+const LEVELS = [
+  { key: 'kinder',  label: 'Kinder'  },
+  { key: 'grade1',  label: 'Grade 1' },
+  { key: 'grade2',  label: 'Grade 2' },
+  { key: 'grade3',  label: 'Grade 3' },
+  { key: 'grade4',  label: 'Grade 4' },
+  { key: 'grade5',  label: 'Grade 5' },
+  { key: 'grade6',  label: 'Grade 6' },
+];
 
-function gradeSortIndex(label) {
-  const i = GRADE_ORDER.indexOf(label);
-  return i === -1 ? GRADE_ORDER.length : i;
-}
-
-// Groups flat rows (one row per school_year + grade_level) into
-// one object per school year, with a grades map and computed totals.
-function groupBySchoolYear(rows) {
-  const map = new Map();
-
-  rows.forEach(row => {
-    const key = row.school_year;
-    if (!map.has(key)) {
-      map.set(key, { school_year: key, grades: [], total_male: 0, total_female: 0 });
-    }
-    const entry = map.get(key);
-    const male = Number(row.male_count) || 0;
-    const female = Number(row.female_count) || 0;
-
-    entry.grades.push({ label: row.grade_level, male, female, total: male + female });
-    entry.total_male += male;
-    entry.total_female += female;
-  });
-
-  return Array.from(map.values())
-    .map(e => ({
-      ...e,
-      grades: e.grades.sort((a, b) => gradeSortIndex(a.label) - gradeSortIndex(b.label)),
-      grand_total: e.total_male + e.total_female,
-    }))
-    // newest school year first
-    .sort((a, b) => String(b.school_year).localeCompare(String(a.school_year)));
-}
-
-function EnrollTable({ year }) {
+function EnrollTable({ row }) {
   return (
     <div style={{ overflowX: 'auto', borderRadius: 10, border: '1px solid var(--gray-100)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', minWidth: 480 }}>
@@ -51,30 +26,33 @@ function EnrollTable({ year }) {
           </tr>
         </thead>
         <tbody>
-          {year.grades.map((g, i) => (
-            <tr
-              key={g.label}
-              style={{
-                background: i % 2 === 0 ? 'white' : 'var(--gray-50)',
-                borderBottom: '1px solid var(--gray-100)',
-              }}
-            >
-              <td style={{ ...td, fontWeight: 600, color: 'var(--gray-900)' }}>{g.label}</td>
-              <td style={{ ...td, textAlign: 'center', color: 'var(--gray-700)' }}>{g.male}</td>
-              <td style={{ ...td, textAlign: 'center', color: 'var(--gray-700)' }}>{g.female}</td>
-              <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: 'var(--red-primary)' }}>
-                {g.total}
-              </td>
-            </tr>
-          ))}
+          {LEVELS.map((l, i) => {
+            const m = Number(row[`${l.key}_male`]   || 0);
+            const f = Number(row[`${l.key}_female`] || 0);
+            const t = m + f;
+            return (
+              <tr
+                key={l.key}
+                style={{
+                  background: i % 2 === 0 ? 'white' : 'var(--gray-50)',
+                  borderBottom: '1px solid var(--gray-100)',
+                }}
+              >
+                <td style={{ ...td, fontWeight: 600, color: 'var(--gray-900)' }}>{l.label}</td>
+                <td style={{ ...td, textAlign: 'center', color: 'var(--gray-700)' }}>{m}</td>
+                <td style={{ ...td, textAlign: 'center', color: 'var(--gray-700)' }}>{f}</td>
+                <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: 'var(--red-primary)' }}>{t}</td>
+              </tr>
+            );
+          })}
         </tbody>
         <tfoot>
           <tr style={{ background: 'var(--gray-50)', fontWeight: 700 }}>
             <td style={{ ...td, borderBottom: 'none' }}>Total</td>
-            <td style={{ ...td, textAlign: 'center', borderBottom: 'none' }}>{year.total_male}</td>
-            <td style={{ ...td, textAlign: 'center', borderBottom: 'none' }}>{year.total_female}</td>
+            <td style={{ ...td, textAlign: 'center', borderBottom: 'none' }}>{row.total_male}</td>
+            <td style={{ ...td, textAlign: 'center', borderBottom: 'none' }}>{row.total_female}</td>
             <td style={{ ...td, textAlign: 'center', color: 'var(--red-primary)', fontSize: '1rem', borderBottom: 'none' }}>
-              {year.grand_total}
+              {row.grand_total}
             </td>
           </tr>
         </tfoot>
@@ -87,17 +65,18 @@ const th = { padding: '12px 16px', textAlign: 'left', fontWeight: 700, whiteSpac
 const td = { padding: '10px 16px' };
 
 export default function EnrollmentStatisticsPage() {
-  const [stats, setStats] = useState([]);
+  const [years, setYears] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api.get('/enrollment-stats')
-      .then(r => setStats(r.data))
+      .then(r => setYears(r.data))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const years = groupBySchoolYear(stats);
-  const totalsStrip = [...years].reverse(); // oldest first, so trend arrows read left-to-right
+  // API returns newest-first (sort_order DESC); reverse for oldest-first trend arrows
+  const totalsStrip = [...years].reverse();
 
   return (
     <div>
@@ -116,7 +95,7 @@ export default function EnrollmentStatisticsPage() {
 
           {loading ? (
             <div className="skeleton" style={{ width: '100%', height: 300, borderRadius: 10 }} />
-          ) : stats.length === 0 ? (
+          ) : years.length === 0 ? (
             <div className="alert alert-info">Enrollment statistics are being compiled. Please check back soon.</div>
           ) : (
             <>
@@ -127,7 +106,7 @@ export default function EnrollmentStatisticsPage() {
                   const diff = prev ? y.grand_total - prev.grand_total : null;
                   return (
                     <div
-                      key={y.school_year}
+                      key={y.id}
                       className="stat-card"
                       style={{
                         flex: '1 1 160px',
@@ -162,7 +141,7 @@ export default function EnrollmentStatisticsPage() {
               {/* One card per school year (newest first) */}
               {years.map(y => (
                 <div
-                  key={y.school_year}
+                  key={y.id}
                   className="card"
                   style={{
                     padding: 32,
@@ -193,10 +172,11 @@ export default function EnrollmentStatisticsPage() {
                     Enrollment Count
                   </h2>
 
-                  <EnrollTable year={y} />
+                  <EnrollTable row={y} />
 
                   <div style={{
                     marginTop: 16,
+                    marginBottom: y.chart_image_url ? 28 : 0,
                     display: 'flex',
                     gap: 24,
                     flexWrap: 'wrap',
@@ -209,6 +189,34 @@ export default function EnrollmentStatisticsPage() {
                       Total: {Number(y.grand_total).toLocaleString()}
                     </span>
                   </div>
+
+                  {y.chart_image_url && (
+                    <div>
+                      <div style={{ height: 1, background: 'var(--gray-100)', marginBottom: 24 }} />
+                      <p style={{
+                        fontSize: '0.72rem',
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        color: '#999',
+                        fontWeight: 600,
+                        marginBottom: 10,
+                      }}>
+                        Enrollment Chart
+                      </p>
+                      <div style={{
+                        borderRadius: 12,
+                        overflow: 'hidden',
+                        border: '1px solid var(--gray-100)',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                      }}>
+                        <img
+                          src={getImageUrl(y.chart_image_url)}
+                          alt={`Enrollment chart SY ${y.school_year}`}
+                          style={{ width: '100%', display: 'block' }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </>
