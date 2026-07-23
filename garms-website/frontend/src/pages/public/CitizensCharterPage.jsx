@@ -1,218 +1,137 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
+import { IconScroll, IconDownload, IconScale, IconExternalLink } from '../../components/Icons';
 
-export default function AccomplishmentsPage() {
-  const [items, setItems] = useState([]);
+export default function CitizensCharterPage() {
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [lightbox, setLightbox] = useState(null);
 
   useEffect(() => {
-    api.get('/accomplishments')
-      .then(response => setItems(response.data))
-      .catch(() => setItems([]))
+    api.get('/charter')
+      .then(r => setDocuments(Array.isArray(r.data) ? r.data : []))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    if (!lightbox) return undefined;
-
-    const handleKeyDown = event => {
-      if (event.key === 'Escape') setLightbox(null);
-    };
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [lightbox]);
-
-  const openLightbox = useCallback((src, alt) => {
-    setLightbox({ src, alt });
-  }, []);
-
-  const closeLightbox = useCallback(() => setLightbox(null), []);
-
-  const formatDate = date => {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('en-PH', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
 
   return (
     <div>
       <div className="page-header">
         <div className="container">
-          <h1>School Accomplishments</h1>
-          <p>Awards, recognitions, and milestones achieved by GARMS</p>
+          <div className="page-header-icon"><IconScroll size={26} /></div>
+          <h1>Citizen's Charter</h1>
+          <p>Our commitment to efficient, transparent, and accountable public service</p>
         </div>
       </div>
 
       <section className="section">
-        <div className="container">
-          <div style={{ marginBottom: 28 }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 7,
-              padding: '7px 12px', borderRadius: 999,
-              background: 'var(--red-pale)', color: 'var(--red-dark)',
-              fontSize: '0.78rem', fontWeight: 700,
-            }}>
-              Awards and Recognitions
+        <div className="container" style={{ maxWidth: 900 }}>
+          <div className="charter-badges">
+            <span className="charter-badge badge-red">
+              <IconScale size={14} /> RA 11032 — EODB Act of 2018
+            </span>
+            <span className="charter-badge badge-blue">
+              <IconScale size={14} /> ARTA — Anti-Red Tape Act
             </span>
           </div>
 
           {loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="card" style={{ overflow: 'hidden' }}>
-                  <div className="skeleton" style={{ width: '100%', height: 220 }} />
-                  <div className="card-body" style={{ padding: '18px 22px' }}>
-                    <div className="skeleton" style={{ width: '68%', height: 17, marginBottom: 10 }} />
-                    <div className="skeleton" style={{ width: '92%', height: 10, marginBottom: 7 }} />
-                    <div className="skeleton" style={{ width: '60%', height: 10 }} />
-                  </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="card" style={{ padding: '20px 24px' }}>
+                  <div className="skeleton" style={{ width: '60%', height: 14, marginBottom: 10 }} />
+                  <div className="skeleton" style={{ width: '100%', height: 10, marginBottom: 8 }} />
+                  <div className="skeleton" style={{ width: '80%', height: 10 }} />
                 </div>
               ))}
             </div>
-          ) : items.length === 0 ? (
+          ) : documents.length === 0 ? (
             <div className="alert alert-info">
-              No accomplishments have been posted yet. Please check back soon.
+              Citizen's Charter documents are being prepared. Please check back soon or contact the school office.
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
-              {items.map(item => {
-                const imageSrc = item.image_url ? getImageUrl(item.image_url) : null;
-
-                return (
-                  <article
-                    key={item.id}
-                    className="card"
-                    style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
-                  >
-                    {imageSrc && (
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        title="Click to enlarge"
-                        aria-label={`Enlarge image: ${item.title}`}
-                        onClick={() => openLightbox(imageSrc, item.title)}
-                        onKeyDown={event => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            openLightbox(imageSrc, item.title);
-                          }
-                        }}
-                        style={{ position: 'relative', overflow: 'hidden', cursor: 'zoom-in' }}
-                      >
-                        <img
-                          src={imageSrc}
-                          alt={item.title}
-                          onError={event => { event.currentTarget.parentElement.style.display = 'none'; }}
-                          onMouseOver={event => { event.currentTarget.style.transform = 'scale(1.04)'; }}
-                          onMouseOut={event => { event.currentTarget.style.transform = 'scale(1)'; }}
-                          style={{
-                            width: '100%', height: 220, objectFit: 'cover', display: 'block',
-                            transition: 'transform 0.3s ease',
-                          }}
-                        />
-                        <span style={{
-                          position: 'absolute', right: 10, bottom: 10,
-                          display: 'inline-flex', alignItems: 'center', gap: 5,
-                          padding: '5px 9px', borderRadius: 7,
-                          background: 'rgba(0, 0, 0, 0.62)', color: '#fff',
-                          fontSize: '0.72rem', fontWeight: 600,
-                          backdropFilter: 'blur(4px)', pointerEvents: 'none',
-                        }}>
-                          View photo
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="card-body" style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 8, padding: '18px 22px 20px' }}>
-                      <h2 style={{
-                        margin: '0 0 7px', color: 'var(--gray-900)',
-                        fontSize: '1rem', fontWeight: 750, lineHeight: 1.4,
+            <>
+              <p style={{ color: 'var(--gray-500)', fontSize: '0.88rem', marginBottom: 24 }}>
+                {documents.length} of 16 documents available
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
+                {documents.map((doc, i) => (
+                  <div key={doc.id} className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                      <span style={{
+                        flexShrink: 0,
+                        width: 32, height: 32,
+                        background: 'var(--red-pale)',
+                        borderRadius: 6,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'var(--red-primary)', fontWeight: 700, fontSize: '0.78rem'
                       }}>
-                        {item.title}
-                      </h2>
-                      {item.description && (
-                        <p style={{
-                          margin: 0, color: 'var(--gray-600)',
-                          fontSize: '0.85rem', lineHeight: 1.65,
-                        }}>
-                          {item.description}
-                        </p>
-                      )}
-                      <div style={{ marginTop: 'auto', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {item.awarding_body && (
-                          <p style={{ fontSize: '0.78rem', color: 'var(--gray-500)', margin: 0 }}>
-                            {item.awarding_body}
-                          </p>
-                        )}
-                        {item.award_date && (
-                          <p style={{ fontSize: '0.75rem', color: 'var(--gray-400)', margin: 0 }}>
-                            {formatDate(item.award_date)}
-                          </p>
-                        )}
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <div>
+                        <h3 style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--gray-900)', margin: 0, lineHeight: 1.4 }}>
+                          {doc.title}
+                        </h3>
                       </div>
                     </div>
-                  </article>
-                );
-              })}
-            </div>
+                    {doc.description && (
+                      <p style={{ fontSize: '0.82rem', color: 'var(--gray-500)', margin: 0, lineHeight: 1.5 }}>
+                        {doc.description}
+                      </p>
+                    )}
+                    <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+                      {doc.pdf_url ? (
+                        <a
+                          href={getImageUrl(doc.pdf_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-outline btn-sm"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                        >
+                          <IconDownload size={14} />
+                          View / Download PDF
+                        </a>
+                      ) : (
+                        <span style={{ fontSize: '0.78rem', color: 'var(--gray-400)', fontStyle: 'italic' }}>
+                          PDF not yet uploaded
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
+
+          <div className="divider" />
+
+          <div className="note-panel">
+            <div className="note-panel-icon"><IconScale size={18} /></div>
+            <div>
+              <h3 className="note-panel-title">Legal Basis</h3>
+              <p>
+                Republic Act No. 11032 (Ease of Doing Business and Efficient Government Service Delivery Act
+                of 2018), Section 6, requires all government agencies, including public schools, to publish
+                their Citizen's Charter on their official website. This requirement stems from the earlier
+                Anti-Red Tape Act (RA 9485) and is consistent with Executive Order No. 2, s. 2016 on Freedom
+                of Information.
+              </p>
+              <p>
+                For the official DepEd Citizen's Charter, visit{' '}
+                <a
+                  href="https://www.deped.gov.ph"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--red-primary)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                >
+                  www.deped.gov.ph <IconExternalLink size={13} />
+                </a>
+              </p>
+            </div>
+          </div>
         </div>
       </section>
-
-      {lightbox && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Enlarged image: ${lightbox.alt}`}
-          onClick={closeLightbox}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 24, background: 'rgba(0, 0, 0, 0.9)',
-            cursor: 'zoom-out', animation: 'fadeIn 0.18s ease-out',
-          }}
-        >
-          <button
-            type="button"
-            aria-label="Close enlarged image"
-            onClick={closeLightbox}
-            style={{
-              position: 'fixed', top: 18, right: 22,
-              width: 42, height: 42, border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 10, background: 'rgba(255,255,255,0.14)',
-              color: '#fff', fontSize: '1.35rem', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 0.18s ease',
-            }}
-            onMouseOver={event => { event.currentTarget.style.background = 'rgba(255,255,255,0.28)'; }}
-            onMouseOut={event => { event.currentTarget.style.background = 'rgba(255,255,255,0.14)'; }}
-          >
-            ✕
-          </button>
-          <img
-            src={lightbox.src}
-            alt={lightbox.alt}
-            onClick={event => event.stopPropagation()}
-            style={{
-              maxWidth: '92vw', maxHeight: '88vh', objectFit: 'contain',
-              borderRadius: 12, boxShadow: '0 24px 80px rgba(0,0,0,0.65)',
-              cursor: 'default',
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 }
