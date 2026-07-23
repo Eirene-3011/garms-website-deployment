@@ -46,9 +46,6 @@ const NAV_ITEMS = [
   { label: 'PPAs', path: '/ppas' },
   {
     label: "Students' Corner", path: '/students-corner',
-    children: [
-      { label: 'Featured Student', path: '/students-corner?tab=featured_student' },
-    ]
   },
   { label: 'Accomplishments', path: '/accomplishments' },
   { label: 'Learning Resources', path: '/learning-resources' },
