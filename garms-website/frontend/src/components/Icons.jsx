@@ -38,6 +38,16 @@ export const IconTarget = (props) => (
   </Svg>
 );
 
+/* Maximize / enlarge */
+export const IconMaximize = (props) => (
+  <Svg {...props}>
+    <path d="M15 4h5v5" />
+    <path d="M20 4l-6 6" />
+    <path d="M9 20H4v-5" />
+    <path d="M4 20l6-6" />
+  </Svg>
+);
+
 /* Core Values — a faceted gem */
 export const IconGem = (props) => (
   <Svg {...props}>
