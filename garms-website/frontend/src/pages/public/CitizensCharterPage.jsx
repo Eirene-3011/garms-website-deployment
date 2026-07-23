@@ -1,7 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
-import { IconAward, IconCalendar, IconMaximize, IconX } from '../../components/Icons';
+import {
+  IconTrophy,
+  IconCalendar,
+  IconMaximize,
+  IconX,
+} from '../../components/Icons';
 
 export default function AccomplishmentsPage() {
   const [items, setItems] = useState([]);
@@ -70,7 +75,7 @@ export default function AccomplishmentsPage() {
               fontSize: '0.85rem', fontWeight: 750,
               border: '1px solid rgba(var(--red-primary-rgb), 0.1)'
             }}>
-              <IconAward size={16} /> Awards and Recognitions
+              <IconTrophy size={16} /> Awards and Recognitions
             </span>
             {!loading && items.length > 0 && (
               <span style={{ fontSize: '0.8rem', color: 'var(--gray-400)', fontWeight: 600 }}>
@@ -174,7 +179,7 @@ export default function AccomplishmentsPage() {
                       }}>
                         {item.awarding_body && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--gray-500)', fontWeight: 600 }}>
-                            <IconAward size={14} style={{ color: 'var(--red-primary)' }} />
+                            <IconTrophy size={14} style={{ color: 'var(--red-primary)' }} />
                             {item.awarding_body}
                           </div>
                         )}
