@@ -70,20 +70,26 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Contact column */}
-          <div className="footer-contact-col">
-            <h4>Contact Information</h4>
-            <ul className="contact-list">
-              <li><LocationIcon /> {info?.address || 'Brgy. Bagumbayan, General Trias City, Cavite'}</li>
-              <li><PhoneIcon /> {info?.landline || '(046) 472-5307'}</li>
-              <li><EmailIcon /> {info?.email || '107960@deped.gov.ph'}</li>
-              <li><ClockIcon /> {info?.office_hours || 'Mon–Fri, 8:00 AM – 5:00 PM'}</li>
-            </ul>
-            <div className="deped-links">
-              <h5>DepEd Links</h5>
-              <a href="https://www.deped.gov.ph" target="_blank" rel="noopener noreferrer">DepEd Central Office</a>
-              <a href="https://www.depedcalabarzonnews.com" target="_blank" rel="noopener noreferrer">DepEd Region IV-A</a>
-              <a href="https://www.depedgeneraltrias.com" target="_blank" rel="noopener noreferrer">DepEd Division GenTrias</a>
+          {/* Combined Contact & DepEd column */}
+          <div className="footer-info-col">
+            <div className="footer-info-grid">
+              <div className="footer-contact-section">
+                <h4>Contact Information</h4>
+                <ul className="contact-list">
+                  <li><LocationIcon /> {info?.address || 'Brgy. Bagumbayan, General Trias City, Cavite'}</li>
+                  <li><PhoneIcon /> {info?.landline || '(046) 472-5307'}</li>
+                  <li><EmailIcon /> {info?.email || '107960@deped.gov.ph'}</li>
+                  <li><ClockIcon /> {info?.office_hours || 'Mon–Fri, 8:00 AM – 5:00 PM'}</li>
+                </ul>
+              </div>
+              <div className="footer-deped-section">
+                <h4>DepEd Links</h4>
+                <div className="deped-links">
+                  <a href="https://www.deped.gov.ph" target="_blank" rel="noopener noreferrer">DepEd Central Office</a>
+                  <a href="https://www.depedcalabarzonnews.com" target="_blank" rel="noopener noreferrer">DepEd Region IV-A</a>
+                  <a href="https://www.depedgeneraltrias.com" target="_blank" rel="noopener noreferrer">DepEd Division GenTrias</a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
