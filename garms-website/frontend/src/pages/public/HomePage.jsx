@@ -111,14 +111,35 @@ const DASH_ICONS = [
 
 /* ------------------------------------------------------------------
    useInView — lightweight scroll-reveal trigger (fires once)
+
+   FIX: previously used `useRef` + a `useEffect` with deps `[threshold]`.
+   That effect only runs once, right after the FIRST render. If the
+   element the ref is attached to isn't in the DOM yet at that moment
+   (e.g. the PPAs section, which only renders after an async fetch
+   resolves and `ppas.length > 0`), `ref.current` is `null`, the
+   IntersectionObserver never gets attached to anything, and the
+   section is stuck at `opacity: 0` forever — even after it mounts.
+
+   FIX: use a callback ref (`useCallback` returning a setter) instead
+   of `useRef`. Every time React attaches the ref to a new/':existing
+   DOM node — including the first time it appears after a conditional
+   render — `setNode` fires, which is a dependency of the effect, so
+   the observer gets (re)created against the real node whenever it
+   actually exists.
    ------------------------------------------------------------------ */
 function useInView(threshold = 0.2) {
-  const ref = useRef(null);
+  const [node, setNode] = useState(null);
   const [inView, setInView] = useState(false);
 
+  // Callback ref: fires every time the DOM node this ref is attached
+  // to changes (including going from null -> element once a
+  // conditionally-rendered section finally mounts).
+  const ref = useCallback((el) => {
+    if (el) setNode(el);
+  }, []);
+
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+    if (!node || inView) return;
     if (typeof IntersectionObserver === 'undefined') { setInView(true); return; }
     const obs = new IntersectionObserver(
       (entries) => {
@@ -131,9 +152,9 @@ function useInView(threshold = 0.2) {
       },
       { threshold, rootMargin: '0px 0px -60px 0px' }
     );
-    obs.observe(el);
+    obs.observe(node);
     return () => obs.disconnect();
-  }, [threshold]);
+  }, [node, threshold, inView]);
 
   return [ref, inView];
 }
@@ -377,6 +398,17 @@ export default function HomePage() {
 
       {/* ============================================================
           Recent PPAs
+
+          FIX CONTEXT: this whole <section> only mounts once
+          `ppas.length > 0` (i.e. after the async `/ppas` fetch
+          resolves). With the old `useInView` (useRef-based), `ppaRef`
+          was never attached to a live DOM node at the time its effect
+          ran, so the IntersectionObserver was never created and
+          `ppaInView` stayed `false` forever — meaning `.reveal` /
+          `.ppas-grid` never got `.in-view` and stayed invisible
+          (`opacity: 0`). The fixed callback-ref version re-runs its
+          effect whenever the node changes, so this now works
+          correctly even though the section mounts late.
           ============================================================ */}
       {ppas.length > 0 && (
         <section className="section ppas-section" ref={ppaRef}>
