@@ -92,7 +92,6 @@ export default function OrgStructurePage() {
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="page-header-icon"><IconLayers size={26} /></div>
           <h1>Organizational Structure</h1>
           <p>School governance, org chart, and faculty & staff directory</p>
         </div>
