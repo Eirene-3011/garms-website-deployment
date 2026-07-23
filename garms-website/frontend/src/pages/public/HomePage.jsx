@@ -240,55 +240,49 @@ function DonutChart({ data, animate, size = 200 }) {
   );
 }
 
-/* ─── CSS Bar Chart ──────────────────────────────────────────────────── */
-function CSSBarChart({ data, animate }) {
+/* ─── Horizontal Bar Chart (Replaced) ────────────────────────────────── */
+function HorizontalBarChart({ data, animate }) {
   if (!data || data.length === 0) return null;
   const maxVal = Math.max(...data.flatMap(d => [d.sections, d.classrooms]), 1);
 
   return (
-    <div className="css-bar-chart">
-      <div className="chart-y-axis">
+    <div className="horizontal-bar-chart">
+      <div className="chart-grid-vertical">
         {[0, 0.25, 0.5, 0.75, 1].map((pct, i) => (
-          <span key={i} className="y-axis-label">{Math.round(maxVal * pct)}</span>
+          <div key={i} className="v-grid-line" style={{ left: `${pct * 100}%` }}>
+            <span className="v-grid-label">{Math.round(maxVal * pct)}</span>
+          </div>
         ))}
       </div>
-      <div className="chart-grid-lines">
-        {[0, 0.25, 0.5, 0.75, 1].map((_, i) => (
-          <div key={i} className="grid-line" />
-        ))}
-      </div>
-      <div className="chart-bars">
+      <div className="chart-rows">
         {data.map((d, i) => {
-          const secH = (d.sections / maxVal) * 100;
-          const clsH = (d.classrooms / maxVal) * 100;
-          // Always render actual height; use transition delay for animation
+          const secW = (d.sections / maxVal) * 100;
+          const clsW = (d.classrooms / maxVal) * 100;
           return (
-            <div key={i} className="bar-group">
-              <div className="bar-pair">
-                <div
-                  className="bar bar-sections"
-                  style={{
-                    height: `${secH}%`,
-                    transition: `height 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${i * 0.1 + 0.3}s`,
-                    minHeight: secH > 0 ? '4px' : '0',
-                  }}
-                  title={`Sections: ${d.sections}`}
-                >
-                  <span className="bar-value">{d.sections}</span>
-                </div>
-                <div
-                  className="bar bar-classrooms"
-                  style={{
-                    height: `${clsH}%`,
-                    transition: `height 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${i * 0.1 + 0.45}s`,
-                    minHeight: clsH > 0 ? '4px' : '0',
-                  }}
-                  title={`Classrooms: ${d.classrooms}`}
-                >
-                  <span className="bar-value">{d.classrooms}</span>
+            <div key={i} className="chart-row-item">
+              <div className="row-label">{d.name}</div>
+              <div className="row-bars-container">
+                <div className="horizontal-bar-group">
+                  <div 
+                    className="h-bar h-bar-sections" 
+                    style={{ 
+                      width: animate ? `${secW}%` : '0%',
+                      transitionDelay: `${i * 0.05}s`
+                    }}
+                  >
+                    <span className="h-bar-value">{d.sections}</span>
+                  </div>
+                  <div 
+                    className="h-bar h-bar-classrooms" 
+                    style={{ 
+                      width: animate ? `${clsW}%` : '0%',
+                      transitionDelay: `${i * 0.05 + 0.1}s`
+                    }}
+                  >
+                    <span className="h-bar-value">{d.classrooms}</span>
+                  </div>
                 </div>
               </div>
-              <span className="bar-label">{d.name}</span>
             </div>
           );
         })}
@@ -515,7 +509,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="charts-grid">
-                  {/* Bar Chart — Grade-Level Breakdown */}
+                  {/* Horizontal Bar Chart — Grade-Level Breakdown */}
                   <div className="chart-card chart-card-lg">
                     <div className="chart-card-header">
                       <div className="chart-card-title-wrap">
@@ -531,7 +525,7 @@ export default function HomePage() {
                     </div>
                     <div className="chart-container">
                       {barChartData.length > 0 ? (
-                        <CSSBarChart data={barChartData} animate={chartInView} />
+                        <HorizontalBarChart data={barChartData} animate={chartInView} />
                       ) : (
                         <div className="chart-empty">No grade data available</div>
                       )}
