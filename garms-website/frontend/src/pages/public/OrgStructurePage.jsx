@@ -93,40 +93,76 @@ export default function OrgStructurePage() {
             </div>
           )}
 
-          {/* School Head / Principal spotlight — sits below the org chart */}
+          {/* School Head / Admin Officer spotlight — sits below the org chart */}
           {loading ? (
             <div className="skeleton" style={{ width: '100%', height: 120, borderRadius: 16, marginBottom: 48 }} />
-          ) : info?.principal_name && (
-            <div
-              className="card"
-              style={{
-                marginBottom: 48,
-                padding: '32px 28px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 24,
-                flexWrap: 'wrap',
-                border: 'none',
-                background: 'linear-gradient(120deg, var(--red-dark), var(--red-primary))',
-              }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
-                  background: 'rgba(255,255,255,0.16)', border: '2px solid rgba(255,255,255,0.35)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-                }}
-              >
-                <IconUser size={40} />
-              </div>
-              <div>
-                <span className="section-eyebrow section-eyebrow-invert" style={{ marginBottom: 6 }}>
-                  School Head
-                </span>
-                <h3 style={{ color: '#fff', fontSize: '1.3rem', margin: '0 0 2px' }}>{info.principal_name}</h3>
-                <p style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '0.9rem' }}>{info.principal_title}</p>
-              </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 48 }}>
+              {info?.principal_name && (
+                <div
+                  className="card"
+                  style={{
+                    padding: '32px 28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 24,
+                    flexWrap: 'wrap',
+                    border: 'none',
+                    background: 'linear-gradient(120deg, var(--red-dark), var(--red-primary))',
+                  }}
+                >
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
+                      background: 'rgba(255,255,255,0.16)', border: '2px solid rgba(255,255,255,0.35)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                    }}
+                  >
+                    <IconUser size={40} />
+                  </div>
+                  <div>
+                    <span className="section-eyebrow section-eyebrow-invert" style={{ marginBottom: 6 }}>
+                      School Head
+                    </span>
+                    <h3 style={{ color: '#fff', fontSize: '1.3rem', margin: '0 0 2px' }}>{info.principal_name}</h3>
+                    <p style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '0.9rem' }}>{info.principal_title}</p>
+                  </div>
+                </div>
+              )}
+
+              {info?.admin_officer_name && (
+                <div
+                  className="card"
+                  style={{
+                    padding: '32px 28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 24,
+                    flexWrap: 'wrap',
+                    border: 'none',
+                    background: 'linear-gradient(120deg, var(--red-dark), var(--red-primary))',
+                  }}
+                >
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
+                      background: 'rgba(255,255,255,0.16)', border: '2px solid rgba(255,255,255,0.35)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                    }}
+                  >
+                    <IconUser size={40} />
+                  </div>
+                  <div>
+                    <span className="section-eyebrow section-eyebrow-invert" style={{ marginBottom: 6 }}>
+                      Admin Officer
+                    </span>
+                    <h3 style={{ color: '#fff', fontSize: '1.3rem', margin: '0 0 2px' }}>{info.admin_officer_name}</h3>
+                    <p style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '0.9rem' }}>{info.admin_officer_title}</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
