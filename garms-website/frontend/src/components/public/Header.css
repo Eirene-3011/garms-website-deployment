@@ -1,7 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-/* Variables for consistent styling — refined institutional palette
-   (maroon + gold echo the school seal's own colors) */
 :root {
   --red-dark: #5c0f1a;
   --red-primary: #8f1626;
@@ -42,11 +40,7 @@ body {
 }
 
 /* ===================================================================
-   Hero banner — full-width, ALWAYS uncropped.
-   The image is rendered at its natural aspect ratio (height: auto),
-   so no part of it is ever clipped, regardless of the source
-   dimensions. The container has no fixed height/aspect-ratio of its
-   own — it simply grows to match the image.
+   Hero banner — full-width, ALWAYS uncropped, image sets the height
    =================================================================== */
 .header-hero {
   position: relative;
@@ -58,21 +52,26 @@ body {
 .hero-banner-frame {
   position: relative;
   width: 100%;
-  line-height: 0; /* kill inline-image whitespace gap */
+  display: block;
+  line-height: 0;
 }
 
 .hero-banner-img {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  height: auto;   /* natural ratio preserved, nothing cropped */
+  height: auto;
   display: block;
 }
 
-/* Gradient scrim so the overlaid logo/title/buttons stay readable
-   against any banner image, without darkening the image itself */
-.hero-slide-overlay {
+.hero-banner-frame > .hero-slide-overlay {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 2;
+  pointer-events: none;
   background: linear-gradient(
     180deg,
     rgba(92, 15, 26, 0.10) 0%,
@@ -81,8 +80,20 @@ body {
   );
 }
 
-/* Skeleton / fallback have no intrinsic image, so they keep a
-   sensible aspect-ratio purely as placeholder sizing */
+.hero-banner-frame > .hero-overlay-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 32px 20px;
+  line-height: normal;
+}
+
 .hero-banner-skeleton,
 .hero-banner-fallback {
   position: relative;
@@ -93,13 +104,29 @@ body {
   overflow: hidden;
 }
 
+.hero-banner-fallback > .hero-overlay-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 32px 20px;
+}
+
 .hero-banner-skeleton {
   animation: heroPulse 1.6s ease-in-out infinite;
 }
 
 .hero-fallback-pattern {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   opacity: 0.15;
   background-image: radial-gradient(circle, var(--gold) 1.5px, transparent 1.5px);
   background-size: 26px 26px;
@@ -110,7 +137,6 @@ body {
   50% { opacity: 1; }
 }
 
-/* Scalloped seal-edge transition beneath the banner */
 .header-hero::after {
   content: '';
   position: absolute;
@@ -126,17 +152,6 @@ body {
   mask-size: 18px 18px;
   -webkit-mask-repeat: repeat-x;
   mask-repeat: repeat-x;
-}
-
-/* Overlaid content — logo, eyebrow badge, title, subtitle, CTAs */
-.hero-overlay-content {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  padding: 32px 20px;
 }
 
 .hero-logo {
@@ -333,11 +348,11 @@ body {
 }
 
 .nav-inner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 56px;
-  position: relative; /* anchors .nav-actions */
 }
 
 .nav-menu {
@@ -441,7 +456,6 @@ body {
   padding-left: 25px;
 }
 
-/* Nav Actions — pinned to the right edge while .nav-menu is centered */
 .nav-actions {
   position: absolute;
   right: 0;
@@ -473,7 +487,6 @@ body {
   transform: scale(1.1);
 }
 
-/* Hamburger Menu for Mobile */
 .hamburger {
   display: none;
   flex-direction: column;
@@ -510,7 +523,6 @@ body {
   transform: translateY(-9px) rotate(-45deg);
 }
 
-/* Mobile Menu Overlay */
 .mobile-menu-overlay {
   position: fixed;
   top: 0;
@@ -522,7 +534,6 @@ body {
   display: block;
 }
 
-/* Search Overlay */
 .search-overlay {
   position: fixed;
   top: 0;
@@ -613,7 +624,8 @@ body {
 }
 
 @media (max-width: 900px) {
-  .hero-overlay-content {
+  .hero-banner-frame > .hero-overlay-content,
+  .hero-banner-fallback > .hero-overlay-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
