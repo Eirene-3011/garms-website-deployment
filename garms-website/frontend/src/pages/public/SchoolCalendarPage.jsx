@@ -55,7 +55,6 @@ export default function SchoolCalendarPage() {
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="breadcrumb"><Link to="/">Home</Link> › School Calendar</div>
           <h1>School Calendar</h1>
           <p>Important dates and events for the school year</p>
         </div>
