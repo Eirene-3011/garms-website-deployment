@@ -30,10 +30,29 @@ export default function OrgStructurePage() {
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
-  // Admin Officer isn't a school_info field — it's a row in the officials table
+  // School Head & Admin Officer are rows in the officials table — pulling from
+  // there (not school_info) is what gives us their uploaded photo_url
+  const schoolHead = officials.find(o => o.full_name === info?.principal_name)
+    || officials.find(o => o.position && o.position.toLowerCase().includes('principal'));
   const adminOfficer = officials.find(
     o => o.position && o.position.toLowerCase().includes('administrative officer')
   );
+
+  // Normalize an officials-table record into the shape the profile modal expects
+  // (which was built around staff_directory fields)
+  const openOfficialProfile = (o) => setSelected({
+    full_name: o.full_name,
+    position_subject: o.position,
+    section_name: o.department_office,
+    photo_url: o.photo_url,
+  });
+
+  const handleOfficialKeyDown = (e, o) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openOfficialProfile(o);
+    }
+  };
 
   // Close profile modal on Escape, lock background scroll while open
   const handleKeyDown = useCallback((e) => {
@@ -109,6 +128,11 @@ export default function OrgStructurePage() {
               {info?.principal_name && (
                 <div
                   className="card"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View profile for ${info.principal_name}`}
+                  onClick={() => schoolHead ? openOfficialProfile(schoolHead) : setSelected({ full_name: info.principal_name, position_subject: info.principal_title })}
+                  onKeyDown={(e) => handleOfficialKeyDown(e, schoolHead || { full_name: info.principal_name, position: info.principal_title })}
                   style={{
                     padding: '32px 28px',
                     display: 'flex',
@@ -116,19 +140,32 @@ export default function OrgStructurePage() {
                     gap: 24,
                     flexWrap: 'wrap',
                     border: 'none',
+                    cursor: 'pointer',
                     background: 'linear-gradient(120deg, var(--red-dark), var(--red-primary))',
                   }}
                 >
-                  <div
-                    aria-hidden="true"
-                    style={{
-                      width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
-                      background: 'rgba(255,255,255,0.16)', border: '2px solid rgba(255,255,255,0.35)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-                    }}
-                  >
-                    <IconUser size={40} />
-                  </div>
+                  {schoolHead?.photo_url ? (
+                    <img
+                      src={getImageUrl(schoolHead.photo_url)}
+                      alt={info.principal_name}
+                      style={{
+                        width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
+                        objectFit: 'cover', border: '2px solid rgba(255,255,255,0.35)',
+                      }}
+                      onError={e => { e.target.src = PLACEHOLDER_AVATAR; }}
+                    />
+                  ) : (
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
+                        background: 'rgba(255,255,255,0.16)', border: '2px solid rgba(255,255,255,0.35)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                      }}
+                    >
+                      <IconUser size={40} />
+                    </div>
+                  )}
                   <div>
                     <span className="section-eyebrow section-eyebrow-invert" style={{ marginBottom: 6 }}>
                       School Head
@@ -142,6 +179,11 @@ export default function OrgStructurePage() {
               {adminOfficer && (
                 <div
                   className="card"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View profile for ${adminOfficer.full_name}`}
+                  onClick={() => openOfficialProfile(adminOfficer)}
+                  onKeyDown={(e) => handleOfficialKeyDown(e, adminOfficer)}
                   style={{
                     padding: '32px 28px',
                     display: 'flex',
@@ -149,6 +191,7 @@ export default function OrgStructurePage() {
                     gap: 24,
                     flexWrap: 'wrap',
                     border: 'none',
+                    cursor: 'pointer',
                     background: 'linear-gradient(120deg, var(--red-dark), var(--red-primary))',
                   }}
                 >
