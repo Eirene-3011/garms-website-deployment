@@ -82,9 +82,6 @@ export default function EnrollmentStatisticsPage() {
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="breadcrumb">
-            <Link to="/">Home</Link> › <Link to="/admissions">Admissions</Link> › Enrollment Statistics
-          </div>
           <h1>Enrollment Statistics</h1>
           <p>Historical enrollment data for GARMS</p>
         </div>
