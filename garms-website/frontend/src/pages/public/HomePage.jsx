@@ -191,8 +191,10 @@ function KpiValue({ value, start, small }) {
 function DonutChart({ data, animate, size = 200 }) {
   if (!data || data.length === 0) return null;
   const total = data.reduce((s, d) => s + d.value, 0);
-  const cx = size / 2;
-  const cy = size / 2;
+  const pad = 14;
+  const viewSize = size + pad * 2;
+  const cx = viewSize / 2;
+  const cy = viewSize / 2;
   const outerR = size / 2 - 10;
   const innerR = outerR * 0.55;
   const circumference = 2 * Math.PI * outerR;
@@ -226,7 +228,7 @@ function DonutChart({ data, animate, size = 200 }) {
   });
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="donut-chart">
+    <svg width={size} height={size} viewBox={`0 0 ${viewSize} ${viewSize}`} className="donut-chart">
       {/* Background ring */}
       <circle cx={cx} cy={cy} r={outerR} fill="none" stroke="var(--gray-100)" strokeWidth={outerR - innerR} />
       {/* Animated segments */}
