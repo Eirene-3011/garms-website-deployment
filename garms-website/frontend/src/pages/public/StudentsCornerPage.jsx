@@ -27,7 +27,6 @@ export default function StudentsCornerPage() {
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="breadcrumb"><Link to="/">Home</Link> › Students' Corner</div>
           <h1>Students' Corner</h1>
           <p>Celebrating the achievements of our Artemians</p>
         </div>
