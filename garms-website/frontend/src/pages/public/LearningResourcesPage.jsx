@@ -2,32 +2,42 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
-import { IconFileText, IconDownload, IconSearch } from '../../components/Icons';
+import { IconBook, IconAbc, IconRuler, IconLibrary, IconFileText, IconDownload, IconSearch } from '../../components/Icons';
+
+const CATS = [
+  { key: 'ARAL', label: 'ARAL Program', Icon: IconBook },
+  { key: 'KS1', label: 'Key Stage 1', Icon: IconAbc },
+  { key: 'KS2', label: 'Key Stage 2', Icon: IconRuler },
+  { key: 'Supplementary', label: 'Supplementary', Icon: IconLibrary },
+];
 
 export default function LearningResourcesPage() {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('ARAL');
   const [query, setQuery] = useState('');
-  const [activeSubject, setActiveSubject] = useState('All');
 
   useEffect(() => {
     api.get('/resources').then(r => setResources(r.data)).finally(() => setLoading(false));
   }, []);
 
-  const subjects = useMemo(() => {
-    const set = new Set();
-    resources.forEach(r => { if (r.subject) set.add(r.subject); });
-    return ['All', ...Array.from(set)];
+  const counts = useMemo(() => {
+    const c = {};
+    CATS.forEach(cat => { c[cat.key] = 0; });
+    resources.forEach(r => { if (c[r.category] !== undefined) c[r.category] += 1; });
+    return c;
   }, [resources]);
 
+  const activeCat = CATS.find(c => c.key === activeTab);
+
   const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
     return resources.filter(r => {
-      const matchesSubject = activeSubject === 'All' || r.subject === activeSubject;
-      const q = query.trim().toLowerCase();
-      const matchesQuery = !q || r.title?.toLowerCase().includes(q) || r.description?.toLowerCase().includes(q);
-      return matchesSubject && matchesQuery;
+      if (r.category !== activeTab) return false;
+      if (!q) return true;
+      return r.title?.toLowerCase().includes(q) || r.description?.toLowerCase().includes(q);
     });
-  }, [resources, activeSubject, query]);
+  }, [resources, activeTab, query]);
 
   return (
     <div>
@@ -35,190 +45,199 @@ export default function LearningResourcesPage() {
         <div className="container">
           <div className="breadcrumb"><Link to="/">Home</Link> › Learning Resources</div>
           <h1>Learning Resources</h1>
-          <p>Study materials and digital resources for GARMS learners</p>
+          <p>ARAL program materials, Key Stage resources, and supplementary learning materials</p>
         </div>
       </div>
 
       <section className="section">
         <div className="container">
-          {/* Controls: search + subject filter */}
+          {/* Category filter tabs */}
+          <div
+            style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}
+            role="tablist"
+            aria-label="Resource category"
+          >
+            {CATS.map(c => {
+              const active = activeTab === c.key;
+              return (
+                <button
+                  key={c.key}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveTab(c.key)}
+                  className={`btn ${active ? 'btn-primary' : 'btn-ghost'}`}
+                >
+                  <c.Icon size={16} />
+                  {c.label}
+                  {!loading && !!counts[c.key] && <span className="tab-count">{counts[c.key]}</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search within active category */}
           {!loading && resources.length > 0 && (
             <div
               style={{
                 display: 'flex',
-                flexWrap: 'wrap',
-                gap: 12,
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 24,
+                gap: 8,
+                background: 'var(--gray-50, #f7f7f8)',
+                border: '1px solid var(--gray-200, #e5e5e5)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                maxWidth: 320,
+                marginBottom: 20,
               }}
             >
-              <div
+              <IconSearch size={16} style={{ color: 'var(--gray-500, #888)', flexShrink: 0 }} />
+              <input
+                type="text"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder={`Search ${activeCat.label}...`}
+                aria-label="Search resources"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  background: 'var(--gray-50, #f7f7f8)',
-                  border: '1px solid var(--gray-200, #e5e5e5)',
-                  borderRadius: 8,
-                  padding: '8px 12px',
-                  flex: '1 1 240px',
-                  maxWidth: 320,
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  fontSize: '0.85rem',
+                  width: '100%',
+                  color: 'var(--gray-900)',
                 }}
-              >
-                <IconSearch size={16} style={{ color: 'var(--gray-500, #888)', flexShrink: 0 }} />
-                <input
-                  type="text"
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  placeholder="Search resources..."
-                  aria-label="Search resources"
-                  style={{
-                    border: 'none',
-                    outline: 'none',
-                    background: 'transparent',
-                    fontSize: '0.85rem',
-                    width: '100%',
-                    color: 'var(--gray-900)',
-                  }}
-                />
-              </div>
-
-              {subjects.length > 1 && (
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {subjects.map(s => {
-                    const active = activeSubject === s;
-                    return (
-                      <button
-                        key={s}
-                        onClick={() => setActiveSubject(s)}
-                        className={`btn btn-sm ${active ? 'btn-primary' : 'btn-ghost'}`}
-                        style={{ borderRadius: 20 }}
-                      >
-                        {s}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+              />
             </div>
           )}
 
           {loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="card" style={{ padding: '20px 24px' }}>
-                  <div className="skeleton" style={{ width: '70%', height: 16, marginBottom: 10 }} />
-                  <div className="skeleton" style={{ width: '90%', height: 10, marginBottom: 6 }} />
-                  <div className="skeleton" style={{ width: '50%', height: 10 }} />
-                </div>
-              ))}
+            <div className="table-wrap">
+              <table className="resource-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th style={{ width: 120 }}>File</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                      <td><div className="skeleton" style={{ width: '70%', height: 12 }} /></td>
+                      <td><div className="skeleton" style={{ width: '85%', height: 12 }} /></td>
+                      <td><div className="skeleton" style={{ width: 80, height: 28, borderRadius: 'var(--radius-md)' }} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : resources.length === 0 ? (
             <div className="alert alert-info">No resources have been posted yet. Please check back soon.</div>
           ) : filtered.length === 0 ? (
-            <div className="alert alert-info">
-              No resources match your search. Try a different keyword or subject.
+            <div className="empty-state">
+              <div className="empty-state-icon" aria-hidden="true"><activeCat.Icon size={22} /></div>
+              <p>
+                {query
+                  ? `No ${activeCat.label} resources match "${query}".`
+                  : 'No resources available in this category yet. Please check back soon.'}
+              </p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
-              {filtered.map(r => (
-                <div
-                  key={r.id}
-                  className="card resource-card"
-                  style={{
-                    padding: '20px 24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 10,
-                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <div
-                      aria-hidden="true"
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 8,
-                        background: 'var(--red-pale)',
-                        color: 'var(--red-primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <IconFileText size={18} />
-                    </div>
-                    <h3 style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--gray-900)', margin: 0, lineHeight: 1.4 }}>
-                      {r.title}
-                    </h3>
-                  </div>
-
-                  {r.description && (
-                    <p style={{ fontSize: '0.82rem', color: 'var(--gray-600)', margin: 0, lineHeight: 1.5 }}>
-                      {r.description}
-                    </p>
-                  )}
-
-                  {r.subject && (
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 600,
-                        color: 'var(--red-primary)',
-                        background: 'var(--red-pale)',
-                        borderRadius: 4,
-                        padding: '2px 8px',
-                        alignSelf: 'flex-start',
-                      }}
-                    >
-                      {r.subject}
-                    </span>
-                  )}
-
-                  {r.file_url ? (
-                    <a
-                      href={getImageUrl(r.file_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        marginTop: 'auto',
-                        fontSize: '0.8rem',
-                        color: 'var(--red-primary)',
-                        fontWeight: 700,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                      }}
-                    >
-                      <IconDownload size={14} />
-                      Download
-                    </a>
-                  ) : (
-                    <span
-                      style={{
-                        marginTop: 'auto',
-                        fontSize: '0.75rem',
-                        color: 'var(--gray-500, #888)',
-                        fontWeight: 600,
-                      }}
-                    >
-                      Uploading Soon
-                    </span>
-                  )}
-                </div>
-              ))}
+            <div className="table-wrap">
+              <table className="resource-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th style={{ width: 120 }}>File</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(r => (
+                    <tr key={r.id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div
+                            aria-hidden="true"
+                            style={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: 7,
+                              background: 'var(--red-pale)',
+                              color: 'var(--red-primary)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <IconFileText size={16} />
+                          </div>
+                          <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--gray-900)' }}>
+                            {r.title}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--gray-600)', lineHeight: 1.5 }}>
+                          {r.description || '—'}
+                        </span>
+                      </td>
+                      <td>
+                        {r.file_url ? (
+                          <a
+                            href={getImageUrl(r.file_url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-primary btn-sm"
+                          >
+                            <IconDownload size={14} />
+                            Download
+                          </a>
+                        ) : (
+                          <span className="badge badge-gray">Uploading Soon</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
       </section>
 
       <style>{`
-        .resource-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        .table-wrap {
+          overflow-x: auto;
+          border: 1px solid var(--gray-200, #e5e5e5);
+          border-radius: var(--radius-md, 8px);
+        }
+        .resource-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 0.85rem;
+        }
+        .resource-table thead th {
+          text-align: left;
+          font-size: 0.72rem;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: var(--gray-500, #888);
+          font-weight: 700;
+          padding: 12px 16px;
+          background: var(--gray-50, #f7f7f8);
+          border-bottom: 1px solid var(--gray-200, #e5e5e5);
+        }
+        .resource-table tbody td {
+          padding: 14px 16px;
+          border-bottom: 1px solid var(--gray-100, #f0f0f0);
+          vertical-align: middle;
+        }
+        .resource-table tbody tr:last-child td {
+          border-bottom: none;
+        }
+        .resource-table tbody tr:hover {
+          background: var(--gray-50, #fafafa);
         }
       `}</style>
     </div>
