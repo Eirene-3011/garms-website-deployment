@@ -20,7 +20,6 @@ export default function AccomplishmentsPage() {
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="breadcrumb"><Link to="/">Home</Link> › Accomplishments</div>
           <h1>School Accomplishments</h1>
           <p>Awards, recognitions, and milestones achieved by GARMS</p>
         </div>
