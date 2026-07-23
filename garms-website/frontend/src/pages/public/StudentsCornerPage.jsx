@@ -56,7 +56,7 @@ export default function StudentsCornerPage() {
               background: 'var(--red-pale)', color: 'var(--red-dark)',
               fontSize: '0.78rem', fontWeight: 700,
             }}>
-              ⭐ Student Spotlight
+              Student Spotlight
             </span>
           </div>
 
