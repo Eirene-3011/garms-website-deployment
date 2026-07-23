@@ -12,6 +12,7 @@ export default function OrgStructurePage() {
   const [orgChart, setOrgChart] = useState(null);
   const [staff, setStaff] = useState([]);
   const [info, setInfo] = useState(null);
+  const [officials, setOfficials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
 
@@ -20,12 +21,19 @@ export default function OrgStructurePage() {
       api.get('/org-chart'),
       api.get('/staff'),
       api.get('/school-info'),
-    ]).then(([o, s, i]) => {
+      api.get('/officials').catch(() => ({ data: [] })),
+    ]).then(([o, s, i, off]) => {
       setOrgChart(o.data);
       setStaff(s.data);
       setInfo(i.data);
+      setOfficials(off.data || []);
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
+
+  // Admin Officer isn't a school_info field — it's a row in the officials table
+  const adminOfficer = officials.find(
+    o => o.position && o.position.toLowerCase().includes('administrative officer')
+  );
 
   // Close profile modal on Escape, lock background scroll while open
   const handleKeyDown = useCallback((e) => {
@@ -131,7 +139,7 @@ export default function OrgStructurePage() {
                 </div>
               )}
 
-              {info?.admin_officer_name && (
+              {adminOfficer && (
                 <div
                   className="card"
                   style={{
@@ -144,22 +152,34 @@ export default function OrgStructurePage() {
                     background: 'linear-gradient(120deg, var(--red-dark), var(--red-primary))',
                   }}
                 >
-                  <div
-                    aria-hidden="true"
-                    style={{
-                      width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
-                      background: 'rgba(255,255,255,0.16)', border: '2px solid rgba(255,255,255,0.35)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-                    }}
-                  >
-                    <IconUser size={40} />
-                  </div>
+                  {adminOfficer.photo_url ? (
+                    <img
+                      src={getImageUrl(adminOfficer.photo_url)}
+                      alt={adminOfficer.full_name}
+                      style={{
+                        width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
+                        objectFit: 'cover', border: '2px solid rgba(255,255,255,0.35)',
+                      }}
+                      onError={e => { e.target.src = PLACEHOLDER_AVATAR; }}
+                    />
+                  ) : (
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
+                        background: 'rgba(255,255,255,0.16)', border: '2px solid rgba(255,255,255,0.35)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                      }}
+                    >
+                      <IconUser size={40} />
+                    </div>
+                  )}
                   <div>
                     <span className="section-eyebrow section-eyebrow-invert" style={{ marginBottom: 6 }}>
                       Admin Officer
                     </span>
-                    <h3 style={{ color: '#fff', fontSize: '1.3rem', margin: '0 0 2px' }}>{info.admin_officer_name}</h3>
-                    <p style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '0.9rem' }}>{info.admin_officer_title}</p>
+                    <h3 style={{ color: '#fff', fontSize: '1.3rem', margin: '0 0 2px' }}>{adminOfficer.full_name}</h3>
+                    <p style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '0.9rem' }}>{adminOfficer.position}</p>
                   </div>
                 </div>
               )}
