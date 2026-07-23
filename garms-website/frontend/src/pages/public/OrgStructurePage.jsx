@@ -6,7 +6,7 @@ import { IconLayers, IconUser } from '../../components/Icons';
 
 const PLACEHOLDER_AVATAR = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="%23e5e7eb"/><circle cx="40" cy="30" r="16" fill="%239ca3af"/><ellipse cx="40" cy="62" rx="24" ry="16" fill="%239ca3af"/></svg>';
 
-const GRADE_LEVELS = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Non-Teaching'];
+const GRADE_LEVELS = ['Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Non-Teaching'];
 
 export default function OrgStructurePage() {
   const [orgChart, setOrgChart] = useState(null);
@@ -74,9 +74,28 @@ export default function OrgStructurePage() {
 
       <section className="section">
         <div className="container">
-          {/* School Head / Principal spotlight */}
+          {/* Org Chart */}
+          <h2 style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--gray-900)', marginBottom: 20 }}>Org Chart</h2>
           {loading ? (
-            <div className="skeleton" style={{ width: '100%', height: 120, borderRadius: 16, marginBottom: 40 }} />
+            <div className="skeleton" style={{ width: '100%', height: 400, borderRadius: 10 }} />
+          ) : orgChart?.image_url ? (
+            <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 32 }}>
+              <img
+                src={getImageUrl(orgChart.image_url)}
+                alt="GARMS Organizational Chart"
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+                onError={e => { e.target.style.display = 'none'; }}
+              />
+            </div>
+          ) : (
+            <div className="alert alert-info" style={{ marginBottom: 32 }}>
+              The organizational chart has not been uploaded yet. Please check back soon.
+            </div>
+          )}
+
+          {/* School Head / Principal spotlight — sits below the org chart */}
+          {loading ? (
+            <div className="skeleton" style={{ width: '100%', height: 120, borderRadius: 16, marginBottom: 48 }} />
           ) : info?.principal_name && (
             <div
               className="card"
@@ -111,26 +130,7 @@ export default function OrgStructurePage() {
             </div>
           )}
 
-          {/* Org Chart */}
-          <h2 style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--gray-900)', marginBottom: 20 }}>Org Chart</h2>
-          {loading ? (
-            <div className="skeleton" style={{ width: '100%', height: 400, borderRadius: 10 }} />
-          ) : orgChart?.image_url ? (
-            <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 48 }}>
-              <img
-                src={getImageUrl(orgChart.image_url)}
-                alt="GARMS Organizational Chart"
-                style={{ width: '100%', height: 'auto', display: 'block' }}
-                onError={e => { e.target.style.display = 'none'; }}
-              />
-            </div>
-          ) : (
-            <div className="alert alert-info" style={{ marginBottom: 48 }}>
-              The organizational chart has not been uploaded yet. Please check back soon.
-            </div>
-          )}
-
-          {/* Faculty & Staff Directory — directly below org chart */}
+          {/* Faculty & Staff Directory — directly below the School Head */}
           <h2 style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--gray-900)', marginBottom: 8 }}>
             Faculty &amp; Staff Directory
           </h2>
