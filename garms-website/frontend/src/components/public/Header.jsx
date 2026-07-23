@@ -12,19 +12,6 @@ const ChevronDownIcon = (p) => (
   </svg>
 );
 
-const SearchIcon = (p) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon" {...p}>
-    <circle cx="11" cy="11" r="7" />
-    <path d="M21 21l-4.35-4.35" />
-  </svg>
-);
-
-const CloseIcon = (p) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon" {...p}>
-    <path d="M18 6L6 18M6 6l12 12" />
-  </svg>
-);
-
 const ArrowRightIcon = (p) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
@@ -88,18 +75,12 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const { info } = useSchoolInfo();
-  const navigate = useNavigate();
   const location = useLocation();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const dropdownRef = useRef(null);
-
-  // Search overlay
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchInputRef = useRef(null);
 
   // Single general banner — no slideshow/carousel, just the one "general" banner
   const [banner, setBanner] = useState(null);
@@ -125,7 +106,6 @@ export default function Header() {
   useEffect(() => {
     setMenuOpen(false);
     setActiveDropdown(null);
-    setSearchOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -138,21 +118,7 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (searchOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [searchOpen]);
-
   const toggleMenu = () => setMenuOpen(!menuOpen);
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    const q = searchQuery.trim();
-    if (!q) return;
-    setSearchOpen(false);
-    navigate(`/search?q=${encodeURIComponent(q)}`);
-  };
 
   return (
     <>
@@ -251,9 +217,6 @@ export default function Header() {
           </div>
 
           <div className="nav-actions">
-            <button className="search-button" onClick={() => setSearchOpen(true)} aria-label="Open search">
-              <SearchIcon />
-            </button>
             <button className={`hamburger${menuOpen ? ' open' : ''}`} onClick={toggleMenu} aria-label="Toggle navigation menu">
               <span></span><span></span><span></span>
             </button>
@@ -263,23 +226,6 @@ export default function Header() {
 
       {/* Mobile Menu Overlay */}
       {menuOpen && <div className="mobile-menu-overlay" onClick={toggleMenu}></div>}
-
-      {/* Search Overlay */}
-      <div className={`search-overlay${searchOpen ? ' open' : ''}`} role="dialog" aria-hidden={!searchOpen}>
-        <form className="search-container" onSubmit={handleSearchSubmit}>
-          <input
-            ref={searchInputRef}
-            type="text"
-            className="search-input"
-            placeholder="Search the site..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <button type="button" className="search-overlay-close" onClick={() => setSearchOpen(false)} aria-label="Close search">
-            <CloseIcon />
-          </button>
-        </form>
-      </div>
     </>
   );
 }
