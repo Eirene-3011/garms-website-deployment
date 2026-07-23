@@ -92,6 +92,11 @@ const CalendarIcon = (p) => (
     <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 );
+const SparkleIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z" />
+  </svg>
+);
 
 const QUICK_LINKS = [
   { label: 'About GARMS', desc: 'School profile & history', path: '/about', Icon: SchoolIcon, accent: 'red' },
@@ -109,31 +114,11 @@ const DASH_ICONS = [
   { Icon: TrendingUpIcon, accent: 'purple' },
 ];
 
-/* ------------------------------------------------------------------
-   useInView — lightweight scroll-reveal trigger (fires once)
-
-   FIX: previously used `useRef` + a `useEffect` with deps `[threshold]`.
-   That effect only runs once, right after the FIRST render. If the
-   element the ref is attached to isn't in the DOM yet at that moment
-   (e.g. the PPAs section, which only renders after an async fetch
-   resolves and `ppas.length > 0`), `ref.current` is `null`, the
-   IntersectionObserver never gets attached to anything, and the
-   section is stuck at `opacity: 0` forever — even after it mounts.
-
-   FIX: use a callback ref (`useCallback` returning a setter) instead
-   of `useRef`. Every time React attaches the ref to a new/':existing
-   DOM node — including the first time it appears after a conditional
-   render — `setNode` fires, which is a dependency of the effect, so
-   the observer gets (re)created against the real node whenever it
-   actually exists.
-   ------------------------------------------------------------------ */
+/* ─── Intersection Observer hook ──────────────────────────────────────── */
 function useInView(threshold = 0.2) {
   const [node, setNode] = useState(null);
   const [inView, setInView] = useState(false);
 
-  // Callback ref: fires every time the DOM node this ref is attached
-  // to changes (including going from null -> element once a
-  // conditionally-rendered section finally mounts).
   const ref = useCallback((el) => {
     if (el) setNode(el);
   }, []);
@@ -159,9 +144,7 @@ function useInView(threshold = 0.2) {
   return [ref, inView];
 }
 
-/* ------------------------------------------------------------------
-   useCountUp — animates a number from 0 to target once triggered
-   ------------------------------------------------------------------ */
+/* ─── Count-up animation ─────────────────────────────────────────────── */
 function useCountUp(target, start, duration = 1300) {
   const [value, setValue] = useState(0);
   useEffect(() => {
@@ -188,6 +171,32 @@ function KpiValue({ value, start, small }) {
   return <p className={`kpi-value${small ? ' kpi-value-sm' : ''}`}>{display}</p>;
 }
 
+/* ─── Tilt card hook for mouse-follow 3D effect ──────────────────────── */
+function useTilt(intensity = 8) {
+  const cardRef = useRef(null);
+
+  const handleMouseMove = useCallback((e) => {
+    const el = cardRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -intensity;
+    const rotateY = ((x - centerX) / centerX) * intensity;
+    el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px)`;
+  }, [intensity]);
+
+  const handleMouseLeave = useCallback(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+  }, []);
+
+  return { cardRef, handleMouseMove, handleMouseLeave };
+}
+
 export default function HomePage() {
   const [dashboard, setDashboard] = useState(null);
   const [ppas, setPpas] = useState([]);
@@ -201,7 +210,6 @@ export default function HomePage() {
   useEffect(() => {
     api.get('/school-dashboard').then(r => setDashboard(r.data)).catch(() => {}).finally(() => setLoadingDash(false));
     api.get('/ppas').then(r => setPpas(r.data.slice(0, 3))).catch(() => {});
-    // Fetch only seasonal banners — exclude general banners
     api.get('/banners')
       .then(r => {
         const seasonal = (r.data || []).filter(b => b.type !== 'general');
@@ -242,7 +250,7 @@ export default function HomePage() {
   return (
     <div className="homepage">
       {/* ============================================================
-          Hero — Seasonal Slideshow, image only (no text overlay)
+          HERO — Cinematic slideshow with Ken Burns zoom
           ============================================================ */}
       <section
         className="hero-slideshow"
@@ -258,9 +266,13 @@ export default function HomePage() {
                 <div key={i} className={`hero-slide${i === currentBanner ? ' active' : ''}`} aria-hidden={i !== currentBanner}>
                   <img src={getImageUrl(b.image_url)} alt={b.title || ''} className="hero-slide-img" onError={(e) => { e.target.style.display = 'none'; }} />
                   <div className="hero-slide-overlay" />
+                  <div className="hero-ken-burns" />
                 </div>
               ))}
             </div>
+
+            {/* Vignette overlay for cinematic depth */}
+            <div className="hero-vignette" />
 
             {banners.length > 1 && (
               <>
@@ -280,26 +292,27 @@ export default function HomePage() {
             )}
           </>
         ) : (
-          /* Fallback when no seasonal banners — quiet decorative gradient, no copy */
           <div className="hero-fallback" aria-hidden="true">
             <div className="hero-fallback-pattern" />
           </div>
         )}
       </section>
 
-      {/* Signature ribbon divider — a nod to service-ribbon colors, ties the
-          banner to the identity band below without needing any copy */}
+      {/* Ribbon divider */}
       <div className="ribbon-divider" aria-hidden="true" />
 
       {/* ============================================================
-          School Dashboard
+          SCHOOL DASHBOARD
           ============================================================ */}
       <section className="section dashboard-section" ref={dashRef}>
         <div className="container">
           <div className={`section-header reveal${dashInView ? ' in-view' : ''}`}>
-            <h2 className="section-title">School Dashboard</h2>
+            <div className="section-header-inner">
+              <span className="section-eyebrow">At a Glance</span>
+              <h2 className="section-title">School Dashboard</h2>
+              <p className="section-subtitle">Key statistics and performance indicators for the current school year.</p>
+            </div>
             <span className="title-accent title-accent-center" aria-hidden="true" />
-            <p className="section-subtitle">Key statistics and performance indicators for the current school year.</p>
           </div>
 
           {loadingDash ? (
@@ -317,9 +330,11 @@ export default function HomePage() {
                   const { Icon, accent } = DASH_ICONS[i];
                   return (
                     <div key={item.label} className={`kpi-card accent-${accent}`}>
+                      <div className="kpi-glow" />
                       <div className="kpi-icon-wrap"><Icon className="kpi-icon" /></div>
                       <KpiValue value={item.value} start={dashInView} small={item.small} />
                       <p className="kpi-label">{item.label}</p>
+                      <div className="kpi-hover-shine" />
                     </div>
                   );
                 })}
@@ -348,21 +363,32 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================
-          Quick Access
+          QUICK ACCESS
           ============================================================ */}
       <section className="section quick-links-section" ref={quickRef}>
         <div className="container">
           <div className={`section-header reveal${quickInView ? ' in-view' : ''}`}>
-            <h2 className="section-title">Quick Access</h2>
+            <div className="section-header-inner">
+              <span className="section-eyebrow">Explore</span>
+              <h2 className="section-title">Quick Access</h2>
+              <p className="section-subtitle">Jump directly to the most visited sections of our portal.</p>
+            </div>
             <span className="title-accent title-accent-center" aria-hidden="true" />
-            <p className="section-subtitle">Jump directly to the most visited sections of our portal.</p>
           </div>
           <div className={`quick-links-grid${quickInView ? ' in-view' : ''}`}>
             {QUICK_LINKS.map(({ label, desc, path, Icon, accent }) => (
               <Link key={label} to={path} className={`quick-link-card accent-${accent}`}>
-                <div className="ql-icon-wrap"><Icon className="ql-icon" /></div>
-                <div className="ql-body"><span className="ql-label">{label}</span><span className="ql-desc">{desc}</span></div>
-                <ArrowRightIcon className="ql-arrow" />
+                <div className="ql-card-inner">
+                  <div className="ql-icon-wrap"><Icon className="ql-icon" /></div>
+                  <div className="ql-body">
+                    <span className="ql-label">{label}</span>
+                    <span className="ql-desc">{desc}</span>
+                  </div>
+                  <div className="ql-arrow-wrap">
+                    <ArrowRightIcon className="ql-arrow" />
+                  </div>
+                </div>
+                <div className="ql-hover-gradient" />
               </Link>
             ))}
           </div>
@@ -370,39 +396,41 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================
-          Recent PPAs
-
-          FIX CONTEXT: this whole <section> only mounts once
-          `ppas.length > 0` (i.e. after the async `/ppas` fetch
-          resolves). With the old `useInView` (useRef-based), `ppaRef`
-          was never attached to a live DOM node at the time its effect
-          ran, so the IntersectionObserver was never created and
-          `ppaInView` stayed `false` forever — meaning `.reveal` /
-          `.ppas-grid` never got `.in-view` and stayed invisible
-          (`opacity: 0`). The fixed callback-ref version re-runs its
-          effect whenever the node changes, so this now works
-          correctly even though the section mounts late.
+          RECENT PPAs
           ============================================================ */}
       {ppas.length > 0 && (
         <section className="section ppas-section" ref={ppaRef}>
           <div className="container">
             <div className="section-row">
               <div className={`section-header section-header-left reveal${ppaInView ? ' in-view' : ''}`}>
-                <h2 className="section-title">Programs &amp; Activities</h2>
+                <div className="section-header-inner">
+                  <span className="section-eyebrow">What's New</span>
+                  <h2 className="section-title">Programs &amp; Activities</h2>
+                </div>
                 <span className="title-accent title-accent-left" aria-hidden="true" />
               </div>
-              <Link to="/ppas" className="view-all-link">View All<ArrowRightIcon className="view-all-icon" /></Link>
+              <Link to="/ppas" className="view-all-link">
+                <span>View All</span>
+                <ArrowRightIcon className="view-all-icon" />
+              </Link>
             </div>
             <div className={`ppas-grid${ppaInView ? ' in-view' : ''}`}>
               {ppas.map(p => (
                 <div key={p.id} className="ppa-card">
                   {p.image_url && (
-                    <div className="ppa-image-wrap"><img src={getImageUrl(p.image_url)} alt={p.name} className="ppa-image" onError={e => e.target.style.display = 'none'} /></div>
+                    <div className="ppa-image-wrap">
+                      <img src={getImageUrl(p.image_url)} alt={p.name} className="ppa-image" onError={e => e.target.style.display = 'none'} />
+                      <div className="ppa-image-overlay" />
+                    </div>
                   )}
                   <div className="ppa-body">
                     <h3 className="ppa-name">{p.name}</h3>
-                    <Link to="/ppas" className="ppa-link">Read more<ArrowRightIcon className="ppa-link-icon" /></Link>
+                    <Link to="/ppas" className="ppa-link">
+                      <span>Read more</span>
+                      <ArrowRightIcon className="ppa-link-icon" />
+                    </Link>
                   </div>
+                  <div className="ppa-shine" />
                 </div>
               ))}
             </div>
@@ -411,17 +439,26 @@ export default function HomePage() {
       )}
 
       {/* ============================================================
-          CTA
+          CTA — with animated gradient background
           ============================================================ */}
       <section className="cta-section" ref={ctaRef}>
         <div className="cta-pattern" />
+        <div className="cta-glow-orb cta-glow-orb-1" />
+        <div className="cta-glow-orb cta-glow-orb-2" />
         <div className={`container cta-inner reveal${ctaInView ? ' in-view' : ''}`}>
           <div className="cta-text">
+            <div className="cta-badge">
+              <SparkleIcon className="cta-badge-icon" />
+              <span>Join Us</span>
+            </div>
             <h2>Ready to join the GARMS community?</h2>
             <p>Take the first step toward quality education. Enroll today or reach out to learn more about our programs and offerings.</p>
           </div>
           <div className="cta-actions">
-            <Link to="/admissions" className="btn btn-primary btn-lg">Enroll Now<ArrowRightIcon className="btn-icon" /></Link>
+            <Link to="/admissions" className="btn btn-primary btn-lg">
+              <span>Enroll Now</span>
+              <ArrowRightIcon className="btn-icon" />
+            </Link>
             <Link to="/contact" className="btn btn-outline-light btn-lg">Contact Us</Link>
           </div>
         </div>
