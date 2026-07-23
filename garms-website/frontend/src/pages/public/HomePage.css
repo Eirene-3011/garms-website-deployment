@@ -46,6 +46,10 @@
   --shadow-lg: 0 20px 40px -8px rgba(0, 0, 0, 0.12);
   --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Height of the sticky top nav — used for scroll-margin-top so
+     in-page anchors/sections aren't crowded/hidden under it. Adjust
+     this if the real nav bar's height differs. */
+  --nav-height: 84px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -60,7 +64,13 @@ html, body {
 
 .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 .homepage { background: var(--white); }
-.section { padding: 80px 0; }
+.section {
+  padding: 80px 0;
+  /* FIX: a bit of breathing room above every section so it doesn't
+     sit flush against (or get clipped under) the sticky nav bar when
+     scrolled/anchored to directly. */
+  scroll-margin-top: var(--nav-height);
+}
 
 /* ================================================================
    Scroll reveal — generic fade/slide utility, triggered by JS
@@ -630,7 +640,10 @@ html, body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: 22px;
-  margin-top: 52px;
+  /* FIX: a touch more breathing room above the grid, and below the
+     section header, so cards don't feel like they're crowding the
+     nav bar / title on shorter viewports. */
+  margin-top: 60px;
 }
 
 .quick-link-card {
