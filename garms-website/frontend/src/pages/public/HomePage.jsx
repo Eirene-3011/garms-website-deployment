@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, RadialBarChart, RadialBar,
-} from 'recharts';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
 import './HomePage.css';
@@ -191,43 +187,101 @@ function KpiValue({ value, start, small }) {
   return <p className={`kpi-value${small ? ' kpi-value-sm' : ''}`}>{display}</p>;
 }
 
-/* ─── Tilt card hook for mouse-follow 3D effect ──────────────────────── */
-function useTilt(intensity = 8) {
-  const cardRef = useRef(null);
+/* ─── Animated SVG Donut Pie Chart ───────────────────────────────────── */
+function DonutChart({ data, animate, size = 200 }) {
+  if (!data || data.length === 0) return null;
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const cx = size / 2;
+  const cy = size / 2;
+  const outerR = size / 2 - 10;
+  const innerR = outerR * 0.55;
+  const circumference = 2 * Math.PI * outerR;
 
-  const handleMouseMove = useCallback((e) => {
-    const el = cardRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -intensity;
-    const rotateY = ((x - centerX) / centerX) * intensity;
-    el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px)`;
-  }, [intensity]);
+  let accumulated = 0;
+  const segments = data.map((d, i) => {
+    const pct = d.value / total;
+    const dashArray = `${circumference * pct} ${circumference}`;
+    const dashOffset = -circumference * accumulated + (animate ? 0 : 0);
+    accumulated += pct;
+    return (
+      <circle
+        key={i}
+        cx={cx}
+        cy={cy}
+        r={outerR}
+        fill="none"
+        stroke={d.color}
+        strokeWidth={outerR - innerR}
+        strokeDasharray={dashArray}
+        strokeDashoffset={dashOffset}
+        transform={`rotate(-90 ${cx} ${cy})`}
+        className="donut-segment"
+        style={{
+          transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          transitionDelay: `${i * 0.2}s`,
+          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.08))',
+        }}
+      />
+    );
+  });
 
-  const handleMouseLeave = useCallback(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
-  }, []);
-
-  return { cardRef, handleMouseMove, handleMouseLeave };
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="donut-chart">
+      {/* Background ring */}
+      <circle cx={cx} cy={cy} r={outerR} fill="none" stroke="var(--gray-100)" strokeWidth={outerR - innerR} />
+      {/* Animated segments */}
+      {segments}
+      {/* Center text */}
+      <text x={cx} y={cy - 8} textAnchor="middle" className="donut-center-num" fill="var(--gray-900)" fontSize="22" fontWeight="800">{total.toLocaleString()}</text>
+      <text x={cx} y={cy + 14} textAnchor="middle" className="donut-center-label" fill="var(--gray-500)" fontSize="10" fontWeight="600">TOTAL</text>
+    </svg>
+  );
 }
 
-/* ─── Custom Chart Tooltip ───────────────────────────────────────────── */
-function ChartTooltip({ active, payload, label }) {
-  if (!active || !payload || !payload.length) return null;
+/* ─── CSS Bar Chart ──────────────────────────────────────────────────── */
+function CSSBarChart({ data, animate }) {
+  if (!data || data.length === 0) return null;
+  const maxVal = Math.max(...data.flatMap(d => [d.sections, d.classrooms]), 1);
+
   return (
-    <div className="chart-tooltip">
-      <p className="chart-tooltip-label">{label}</p>
-      {payload.map((entry, idx) => (
-        <p key={idx} className="chart-tooltip-value" style={{ color: entry.color || entry.fill }}>
-          {entry.name}: {entry.value}
-        </p>
-      ))}
+    <div className="css-bar-chart">
+      <div className="chart-y-axis">
+        {[0, 0.25, 0.5, 0.75, 1].map((pct, i) => (
+          <span key={i} className="y-axis-label">{Math.round(maxVal * pct)}</span>
+        ))}
+      </div>
+      <div className="chart-grid-lines">
+        {[0, 0.25, 0.5, 0.75, 1].map((_, i) => (
+          <div key={i} className="grid-line" />
+        ))}
+      </div>
+      <div className="chart-bars">
+        {data.map((d, i) => {
+          const secH = (d.sections / maxVal) * 100;
+          const clsH = (d.classrooms / maxVal) * 100;
+          return (
+            <div key={i} className="bar-group">
+              <div className="bar-pair">
+                <div
+                  className="bar bar-sections"
+                  style={{ height: animate ? `${secH}%` : '0%' }}
+                  title={`Sections: ${d.sections}`}
+                >
+                  <span className="bar-value">{d.sections}</span>
+                </div>
+                <div
+                  className="bar bar-classrooms"
+                  style={{ height: animate ? `${clsH}%` : '0%' }}
+                  title={`Classrooms: ${d.classrooms}`}
+                >
+                  <span className="bar-value">{d.classrooms}</span>
+                </div>
+              </div>
+              <span className="bar-label">{d.name}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -297,12 +351,7 @@ export default function HomePage() {
     ];
   }, [dashStats.teaching_personnel, dashStats.non_teaching_personnel]);
 
-  const enrollmentPieData = useMemo(() => {
-    if (barChartData.length === 0) return [];
-    return barChartData.map(g => ({ name: g.name, value: g.sections, color: '#c41e3a' }));
-  }, [barChartData]);
-
-  /* ─── Summary stats for the new info strip ─────────────────────── */
+  /* ─── Summary stats ────────────────────────────────────────────── */
   const summaryStats = useMemo(() => {
     const totalSections = grades.reduce((s, g) => s + (Number(g.sections_count) || 0), 0);
     const totalClassrooms = grades.reduce((s, g) => s + (Number(g.classrooms_count) || 0), 0);
@@ -481,23 +530,14 @@ export default function HomePage() {
                     </div>
                     <div className="chart-container">
                       {barChartData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={320}>
-                          <BarChart data={barChartData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }} barCategoryGap="20%">
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--gray-200)" />
-                            <XAxis dataKey="name" tick={{ fontSize: 13, fontWeight: 600, fill: 'var(--gray-600)' }} axisLine={false} tickLine={false} />
-                            <YAxis tick={{ fontSize: 12, fill: 'var(--gray-500)' }} axisLine={false} tickLine={false} />
-                            <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(196, 30, 58, 0.04)' }} />
-                            <Bar dataKey="sections" name="Sections" fill="#c41e3a" radius={[6, 6, 0, 0]} maxBarSize={40} />
-                            <Bar dataKey="classrooms" name="Classrooms" fill="#c99a3b" radius={[6, 6, 0, 0]} maxBarSize={40} />
-                          </BarChart>
-                        </ResponsiveContainer>
+                        <CSSBarChart data={barChartData} animate={chartInView} />
                       ) : (
                         <div className="chart-empty">No grade data available</div>
                       )}
                     </div>
                   </div>
 
-                  {/* Pie Chart — Personnel Distribution */}
+                  {/* Donut Pie Chart — Personnel Distribution */}
                   <div className="chart-card chart-card-sm">
                     <div className="chart-card-header">
                       <div className="chart-card-title-wrap">
@@ -507,34 +547,7 @@ export default function HomePage() {
                     </div>
                     <div className="chart-container chart-container-pie">
                       {pieChartData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                          <PieChart>
-                            <Pie
-                              data={pieChartData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={65}
-                              outerRadius={105}
-                              paddingAngle={4}
-                              dataKey="value"
-                              nameKey="name"
-                              stroke="none"
-                              animationBegin={0}
-                              animationDuration={1200}
-                            >
-                              {pieChartData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip content={<ChartTooltip />} />
-                            <Legend
-                              verticalAlign="bottom"
-                              iconType="circle"
-                              iconSize={10}
-                              wrapperStyle={{ fontSize: '0.85rem', fontWeight: 600, paddingTop: '8px' }}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
+                        <DonutChart data={pieChartData} animate={chartInView} />
                       ) : (
                         <div className="chart-empty">No personnel data available</div>
                       )}
@@ -542,12 +555,12 @@ export default function HomePage() {
                     {/* Personnel count badges */}
                     {pieChartData.length > 0 && (
                       <div className="personnel-badges">
-                        <div className="personnel-badge personnel-badge-teaching">
+                        <div className="personnel-badge">
                           <span className="personnel-badge-dot" style={{ background: '#c41e3a' }} />
                           <span className="personnel-badge-label">Teaching</span>
                           <span className="personnel-badge-value">{Number(dashStats.teaching_personnel) || 0}</span>
                         </div>
-                        <div className="personnel-badge personnel-badge-nonteaching">
+                        <div className="personnel-badge">
                           <span className="personnel-badge-dot" style={{ background: '#c99a3b' }} />
                           <span className="personnel-badge-label">Non-Teaching</span>
                           <span className="personnel-badge-value">{Number(dashStats.non_teaching_personnel) || 0}</span>
