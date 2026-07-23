@@ -404,17 +404,7 @@ export default function HomePage() {
             {/* Vignette overlay for cinematic depth */}
             <div className="hero-vignette" />
 
-            {/* Hero content overlay — school identity */}
-            <div className="hero-content-overlay">
-              <div className="hero-content-inner">
-                <div className="hero-badge-row">
-                  <span className="hero-badge-pill">Welcome to</span>
-                  <span className="hero-badge-pill hero-badge-pill-gold">GARMS</span>
-                </div>
-                <h1 className="hero-headline">Garcia Academy of Rizal, Makati City</h1>
-                <p className="hero-tagline">Nurturing minds, building futures — excellence in every classroom.</p>
-              </div>
-            </div>
+            {/* Hero content overlay removed as requested */}
 
             {banners.length > 1 && (
               <>
