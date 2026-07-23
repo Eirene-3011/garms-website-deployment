@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import {
@@ -91,9 +91,80 @@ const PROCESS_STEPS = [
 
 const TOTAL_PROCESSING = { fee: 'None', time: '1 hour, 10 minutes' };
 
+const QUICK_NAV = [
+  { id: 'requirements', label: 'Requirements' },
+  { id: 'process', label: 'Process' },
+  { id: 'schedule', label: 'Schedule' },
+  { id: 'apply', label: 'Apply' },
+];
+
+function ChevronIcon({ open }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      style={{
+        transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+        transition: 'transform 180ms ease',
+        flexShrink: 0,
+      }}
+      aria-hidden="true"
+    >
+      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function Accordion({ title, subtitle, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div
+      style={{
+        border: '1px solid var(--gray-200)',
+        borderRadius: 10,
+        marginBottom: 20,
+        overflow: 'hidden',
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          padding: '14px 16px',
+          background: 'var(--gray-50)',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
+          font: 'inherit',
+          color: 'inherit',
+        }}
+      >
+        <span>
+          <span style={{ display: 'block', fontWeight: 600, fontSize: 13 }}>{title}</span>
+          {subtitle && (
+            <span style={{ display: 'block', fontSize: 12, opacity: 0.7, marginTop: 2 }}>{subtitle}</span>
+          )}
+        </span>
+        <ChevronIcon open={open} />
+      </button>
+      {open && <div style={{ padding: '16px' }}>{children}</div>}
+    </div>
+  );
+}
+
 export default function AdmissionsPage() {
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState(null);
+  const sectionRefs = useRef({});
 
   useEffect(() => {
     api.get('/enrollment')
@@ -101,6 +172,27 @@ export default function AdmissionsPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) setActiveSection(entry.target.id);
+        });
+      },
+      { rootMargin: '-40% 0px -50% 0px', threshold: 0 }
+    );
+    QUICK_NAV.forEach(({ id }) => {
+      const el = sectionRefs.current[id];
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [loading]);
+
+  const scrollToSection = (id) => {
+    const el = sectionRefs.current[id];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const stats = [
     { Icon: IconBuilding, label: 'School Type', value: 'Public Elementary' },
@@ -118,6 +210,52 @@ export default function AdmissionsPage() {
           <div className="breadcrumb"><Link to="/">Home</Link> › Admissions</div>
           <h1>Admissions &amp; Enrollment</h1>
           <p>Everything you need to know about enrolling at GARMS</p>
+        </div>
+      </div>
+
+      {/* Sticky quick-nav */}
+      <div
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 20,
+          background: '#fff',
+          borderBottom: '1px solid var(--gray-200)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+        }}
+      >
+        <div
+          className="container"
+          style={{
+            maxWidth: 900,
+            display: 'flex',
+            gap: 8,
+            overflowX: 'auto',
+            padding: '10px 24px',
+          }}
+        >
+          {QUICK_NAV.map(item => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => scrollToSection(item.id)}
+              style={{
+                whiteSpace: 'nowrap',
+                padding: '6px 14px',
+                borderRadius: 999,
+                fontSize: 13,
+                fontWeight: 600,
+                border: '1px solid',
+                cursor: 'pointer',
+                transition: 'all 150ms ease',
+                borderColor: activeSection === item.id ? 'var(--red-primary)' : 'var(--gray-200)',
+                background: activeSection === item.id ? 'var(--red-primary)' : '#fff',
+                color: activeSection === item.id ? '#fff' : 'var(--gray-700)',
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -162,7 +300,12 @@ export default function AdmissionsPage() {
           </div>
 
           {/* Requirements */}
-          <div className="card" style={{ padding: 32, marginBottom: 24 }}>
+          <div
+            id="requirements"
+            ref={el => (sectionRefs.current.requirements = el)}
+            className="card"
+            style={{ padding: 32, marginBottom: 24, scrollMarginTop: 72 }}
+          >
             <h2 className="section-card-title">
               <span className="section-card-title-icon"><IconClipboard size={18} /></span>
               Enrollment Requirements
@@ -173,7 +316,7 @@ export default function AdmissionsPage() {
             ) : (
               <div>
                 <h3 className="stat-card-label" style={{ marginBottom: 8 }}>Standard Requirements</h3>
-                <ul className="checklist" style={{ marginBottom: 20 }}>
+                <ul className="checklist" style={{ marginBottom: 24 }}>
                   {STANDARD_REQUIREMENTS.map(item => (
                     <li key={item.doc}>
                       <span className="checklist-icon" aria-hidden="true"><IconCheck size={13} /></span>
@@ -186,24 +329,33 @@ export default function AdmissionsPage() {
                   ))}
                 </ul>
 
-                <h3 className="stat-card-label" style={{ marginBottom: 8 }}>
-                  If PSA Birth Certificate Is Not Available
-                </h3>
-                <p style={{ marginBottom: 10, fontSize: 14, opacity: 0.8 }}>
-                  Any of the following may be submitted as alternative:
-                </p>
-                <ul className="checklist" style={{ marginBottom: 20 }}>
-                  {ALTERNATIVE_REQUIREMENTS.map(item => (
-                    <li key={item}>
-                      <span className="checklist-icon" aria-hidden="true"><IconCheck size={13} /></span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                <Accordion
+                  title="If a PSA Birth Certificate is not available"
+                  subtitle="Tap to see 8 accepted alternatives"
+                >
+                  <ul className="checklist">
+                    {ALTERNATIVE_REQUIREMENTS.map(item => (
+                      <li key={item}>
+                        <span className="checklist-icon" aria-hidden="true"><IconCheck size={13} /></span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Accordion>
 
-                <h3 className="stat-card-label" style={{ marginBottom: 8 }}>Special Cases</h3>
+                <h3 className="stat-card-label" style={{ marginBottom: 8, marginTop: 24 }}>Special Cases</h3>
                 {SPECIAL_CASE_REQUIREMENTS.map(sc => (
-                  <div key={sc.condition} style={{ marginBottom: 12, padding: '12px 16px', background: 'var(--gray-50)', borderRadius: 8, border: '1px solid var(--gray-200)' }}>
+                  <div
+                    key={sc.condition}
+                    style={{
+                      marginBottom: 12,
+                      padding: '12px 16px',
+                      background: 'var(--gray-50)',
+                      borderRadius: 8,
+                      border: '1px solid var(--gray-200)',
+                      borderLeft: '3px solid var(--red-primary)',
+                    }}
+                  >
                     <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{sc.condition}</p>
                     <p style={{ fontSize: 13, marginBottom: 3 }}>Required: {sc.doc}</p>
                     <p style={{ fontSize: 12, opacity: 0.7 }}>Where to secure: {sc.where}</p>
@@ -214,7 +366,12 @@ export default function AdmissionsPage() {
           </div>
 
           {/* Enrollment Process */}
-          <div className="card" style={{ padding: 32, marginBottom: 24 }}>
+          <div
+            id="process"
+            ref={el => (sectionRefs.current.process = el)}
+            className="card"
+            style={{ padding: 32, marginBottom: 24, scrollMarginTop: 72 }}
+          >
             <h2 className="section-card-title">
               <span className="section-card-title-icon"><IconListOrdered size={18} /></span>
               Enrollment Process
@@ -225,31 +382,90 @@ export default function AdmissionsPage() {
             ) : (
               <div>
                 {PROCESS_STEPS.map((step, idx) => (
-                  <div key={idx} style={{ marginBottom: 24 }}>
-                    <div style={{ padding: '10px 16px', background: 'var(--red-pale)', borderRadius: 8, marginBottom: 16, border: '1px solid var(--red-light)' }}>
-                      <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--red-dark)' }}>Client Step {idx + 1}</p>
-                      <p style={{ fontSize: 14, color: 'var(--red-dark)' }}>{step.clientStep}</p>
+                  <div key={idx} style={{ marginBottom: 24, display: 'flex', gap: 16 }}>
+                    {/* Timeline rail */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                      <div
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: '50%',
+                          background: 'var(--red-primary)',
+                          color: '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 13,
+                          fontWeight: 700,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {idx + 1}
+                      </div>
+                      {idx < PROCESS_STEPS.length - 1 && (
+                        <div style={{ flex: 1, width: 2, background: 'var(--gray-200)', marginTop: 4 }} />
+                      )}
                     </div>
-                    <div>
-                      {step.actions.map((a, ai) => (
-                        <div key={ai} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '10px 20px', padding: '12px 0', borderBottom: '1px solid var(--gray-100)', fontSize: 13 }}>
-                          <div>
-                            <p style={{ fontWeight: 600, marginBottom: 4 }}>Step {ai + 1}: {a.action}</p>
-                            {a.note && <p style={{ opacity: 0.7, fontSize: 12 }}>Note: {a.note}</p>}
-                            <p style={{ opacity: 0.7, fontSize: 12 }}>By: {a.responsible}</p>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          padding: '10px 16px',
+                          background: 'var(--red-pale)',
+                          borderRadius: 8,
+                          marginBottom: 16,
+                          border: '1px solid var(--red-light)',
+                        }}
+                      >
+                        <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--red-dark)' }}>Client Step {idx + 1}</p>
+                        <p style={{ fontSize: 14, color: 'var(--red-dark)' }}>{step.clientStep}</p>
+                      </div>
+
+                      <div>
+                        {step.actions.map((a, ai) => (
+                          <div
+                            key={ai}
+                            className="process-action-row"
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr auto auto',
+                              gap: '10px 20px',
+                              padding: '12px 0',
+                              borderBottom: '1px solid var(--gray-100)',
+                              fontSize: 13,
+                            }}
+                          >
+                            <div>
+                              <p style={{ fontWeight: 600, marginBottom: 4 }}>Step {ai + 1}: {a.action}</p>
+                              {a.note && <p style={{ opacity: 0.7, fontSize: 12 }}>Note: {a.note}</p>}
+                              <p style={{ opacity: 0.7, fontSize: 12 }}>By: {a.responsible}</p>
+                            </div>
+                            <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                              <span className="process-action-label">Fee: </span>
+                              <span style={{ fontWeight: 600 }}>{a.fee}</span>
+                            </div>
+                            <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                              <span className="process-action-label">Time: </span>
+                              <span style={{ fontWeight: 600 }}>{a.time}</span>
+                            </div>
                           </div>
-                          <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                            <p style={{ fontWeight: 600 }}>Fee: {a.fee}</p>
-                          </div>
-                          <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                            <p style={{ fontWeight: 600 }}>Time: {a.time}</p>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ))}
-                <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                <div
+                  style={{
+                    marginTop: 16,
+                    paddingTop: 16,
+                    borderTop: '1px solid rgba(0,0,0,0.1)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                    fontWeight: 600,
+                  }}
+                >
                   <span>Total</span>
                   <span>Fee: {TOTAL_PROCESSING.fee} · Processing Time: {TOTAL_PROCESSING.time}</span>
                 </div>
@@ -258,27 +474,45 @@ export default function AdmissionsPage() {
           </div>
 
           {/* Enrollment schedule (from admin if set) */}
-          {info?.schedule && (
-            <div className="note-panel" style={{ marginBottom: 24 }}>
-              <div className="note-panel-icon"><IconCalendar size={18} /></div>
-              <div>
-                <h3 className="note-panel-title">Enrollment Schedule</h3>
-                <p>{info.schedule}</p>
+          <div
+            id="schedule"
+            ref={el => (sectionRefs.current.schedule = el)}
+            style={{ scrollMarginTop: 72 }}
+          >
+            {info?.schedule ? (
+              <div className="note-panel" style={{ marginBottom: 24 }}>
+                <div className="note-panel-icon"><IconCalendar size={18} /></div>
+                <div>
+                  <h3 className="note-panel-title">Enrollment Schedule</h3>
+                  <p>{info.schedule}</p>
+                </div>
               </div>
-            </div>
-          )}
+            ) : (
+              !loading && (
+                <div className="note-panel" style={{ marginBottom: 24, opacity: 0.75 }}>
+                  <div className="note-panel-icon"><IconCalendar size={18} /></div>
+                  <div>
+                    <h3 className="note-panel-title">Enrollment Schedule</h3>
+                    <p>No schedule has been posted yet. Check back soon, or contact the school directly.</p>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
 
           {/* Primary CTA — Online Enrollment only */}
-          <a
-            href={onlineEnrollmentLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary btn-lg"
-            style={{ marginBottom: 24, display: 'inline-flex', alignItems: 'center', gap: 8 }}
-          >
-            <IconMonitor size={18} />
-            Online Enrollment Portal
-          </a>
+          <div id="apply" ref={el => (sectionRefs.current.apply = el)} style={{ scrollMarginTop: 72 }}>
+            <a
+              href={onlineEnrollmentLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary btn-lg"
+              style={{ marginBottom: 24, display: 'inline-flex', alignItems: 'center', gap: 8 }}
+            >
+              <IconMonitor size={18} />
+              Online Enrollment Portal
+            </a>
+          </div>
 
           <div className="divider" />
 
@@ -291,6 +525,52 @@ export default function AdmissionsPage() {
 
         </div>
       </section>
+
+      {/* Mobile floating apply button */}
+      <a
+        href={onlineEnrollmentLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mobile-apply-fab"
+        style={{
+          position: 'fixed',
+          bottom: 20,
+          left: 16,
+          right: 16,
+          zIndex: 30,
+          display: 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          padding: '14px 20px',
+          borderRadius: 12,
+          background: 'var(--red-primary)',
+          color: '#fff',
+          fontWeight: 700,
+          fontSize: 14,
+          textDecoration: 'none',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.18)',
+        }}
+      >
+        <IconMonitor size={18} />
+        Apply for Enrollment
+      </a>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .process-action-row {
+            grid-template-columns: 1fr !important;
+            gap: 4px !important;
+          }
+          .process-action-row > div:nth-child(2),
+          .process-action-row > div:nth-child(3) {
+            text-align: left !important;
+          }
+          .mobile-apply-fab {
+            display: flex !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
