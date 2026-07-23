@@ -170,9 +170,13 @@ export default function HomePage() {
   return (
     <div className="homepage">
       {/* ============================================================
-          Hero — Seasonal Slideshow Only (general banner excluded)
+          Hero — Seasonal Slideshow, image only (no text overlay)
           ============================================================ */}
-      <section className="hero-slideshow" onMouseEnter={() => banners.length > 1 && setAutoplay(false)} onMouseLeave={() => banners.length > 1 && setAutoplay(true)}>
+      <section
+        className="hero-slideshow"
+        onMouseEnter={() => banners.length > 1 && setAutoplay(false)}
+        onMouseLeave={() => banners.length > 1 && setAutoplay(true)}
+      >
         {bannersLoading ? (
           <div className="hero-skeleton" aria-hidden="true" />
         ) : hasBanners && banner ? (
@@ -184,21 +188,6 @@ export default function HomePage() {
                   <div className="hero-slide-overlay" />
                 </div>
               ))}
-            </div>
-
-            <div className="hero-overlay-content container">
-              {info?.logo_url && (
-                <img src={getImageUrl(info.logo_url)} alt="GARMS Logo" className="hero-logo" onError={e => e.target.style.display = 'none'} />
-              )}
-              <div className="hero-text-block">
-                {banner.title && <span className="hero-eyebrow"><SparkleIcon className="hero-eyebrow-icon" />{banner.title}</span>}
-                <h1 className="hero-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
-                <p className="hero-subtitle">{info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}</p>
-                <div className="hero-actions">
-                  <Link to="/admissions" className="btn btn-primary btn-lg">Enroll Now<ArrowRightIcon className="btn-icon" /></Link>
-                  <Link to="/about" className="btn btn-outline-light btn-lg">Learn More</Link>
-                </div>
-              </div>
             </div>
 
             {banners.length > 1 && (
@@ -219,23 +208,34 @@ export default function HomePage() {
             )}
           </>
         ) : (
-          /* Fallback when no seasonal banners — gradient hero with school info */
+          /* Fallback when no seasonal banners — quiet decorative gradient, no copy */
           <div className="hero-fallback" aria-hidden="true">
             <div className="hero-fallback-pattern" />
-            <div className="hero-overlay-content container">
-              {info?.logo_url && <img src={getImageUrl(info.logo_url)} alt="GARMS Logo" className="hero-logo" onError={e => e.target.style.display = 'none'} />}
-              <div className="hero-text-block">
-                <span className="hero-eyebrow"><SparkleIcon className="hero-eyebrow-icon" />Welcome to GARMS</span>
-                <h1 className="hero-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
-                <p className="hero-subtitle">{info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}</p>
-                <div className="hero-actions">
-                  <Link to="/admissions" className="btn btn-primary btn-lg">Enroll Now<ArrowRightIcon className="btn-icon" /></Link>
-                  <Link to="/about" className="btn btn-outline-light btn-lg">Learn More</Link>
-                </div>
-              </div>
-            </div>
           </div>
         )}
+      </section>
+
+      {/* ============================================================
+          Welcome — school identity, lives below the banner now
+          ============================================================ */}
+      <section className="welcome-section">
+        <div className="container welcome-inner">
+          {info?.logo_url && (
+            <img
+              src={getImageUrl(info.logo_url)}
+              alt="GARMS Logo"
+              className="welcome-logo"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          )}
+          <span className="section-eyebrow"><SparkleIcon className="section-eyebrow-icon" />Welcome to GARMS</span>
+          <h1 className="welcome-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
+          <p className="welcome-subtitle">{info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}</p>
+          <div className="welcome-actions">
+            <Link to="/admissions" className="btn btn-primary btn-lg">Enroll Now<ArrowRightIcon className="btn-icon" /></Link>
+            <Link to="/about" className="btn btn-outline btn-lg">Learn More</Link>
+          </div>
+        </div>
       </section>
 
       {/* ============================================================
