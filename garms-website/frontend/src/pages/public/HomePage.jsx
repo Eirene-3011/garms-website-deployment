@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
@@ -92,16 +92,6 @@ const CalendarIcon = (p) => (
     <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 );
-const SparkleIcon = (p) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z" />
-  </svg>
-);
-const BookOpenIcon = (p) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-  </svg>
-);
 
 const QUICK_LINKS = [
   { label: 'About GARMS', desc: 'School profile & history', path: '/about', Icon: SchoolIcon, accent: 'red' },
@@ -118,6 +108,64 @@ const DASH_ICONS = [
   { Icon: BuildingIcon, accent: 'green' },
   { Icon: TrendingUpIcon, accent: 'purple' },
 ];
+
+/* ------------------------------------------------------------------
+   useInView — lightweight scroll-reveal trigger (fires once)
+   ------------------------------------------------------------------ */
+function useInView(threshold = 0.2) {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') { setInView(true); return; }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setInView(true);
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold, rootMargin: '0px 0px -60px 0px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+
+  return [ref, inView];
+}
+
+/* ------------------------------------------------------------------
+   useCountUp — animates a number from 0 to target once triggered
+   ------------------------------------------------------------------ */
+function useCountUp(target, start, duration = 1300) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!start || typeof target !== 'number' || Number.isNaN(target)) return;
+    let raf;
+    let startTime = null;
+    const step = (ts) => {
+      if (startTime === null) startTime = ts;
+      const progress = Math.min((ts - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(eased * target));
+      if (progress < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [start, target, duration]);
+  return value;
+}
+
+function KpiValue({ value, start, small }) {
+  const isNumeric = typeof value === 'number';
+  const count = useCountUp(isNumeric ? value : 0, start && isNumeric);
+  const display = isNumeric ? count.toLocaleString() : value;
+  return <p className={`kpi-value${small ? ' kpi-value-sm' : ''}`}>{display}</p>;
+}
 
 export default function HomePage() {
   const [info, setInfo] = useState(null);
@@ -159,13 +207,19 @@ export default function HomePage() {
   const grades = dashboard?.grades || [];
 
   const dashItems = [
-    { label: 'Total Enrollment', value: dashStats.enrollment_count?.toLocaleString() || '—', small: false },
-    { label: 'Teaching Personnel', value: dashStats.teaching_personnel || '—', small: false },
-    { label: 'Non-Teaching Personnel', value: dashStats.non_teaching_personnel || '—', small: false },
-    { label: 'Performance Indicator', value: dashStats.performance_indicator || '—', small: true },
+    { label: 'Total Enrollment', value: dashStats.enrollment_count != null ? Number(dashStats.enrollment_count) : '—', small: false },
+    { label: 'Teaching Personnel', value: dashStats.teaching_personnel != null ? Number(dashStats.teaching_personnel) : '—', small: false },
+    { label: 'Non-Teaching Personnel', value: dashStats.non_teaching_personnel != null ? Number(dashStats.non_teaching_personnel) : '—', small: false },
+    { label: 'Performance Indicator', value: dashStats.performance_indicator ?? '—', small: true },
   ];
 
   const hasBanners = banners.length > 0;
+  const monogram = (info?.school_name || 'GARMS').trim().charAt(0).toUpperCase() || 'G';
+
+  const [dashRef, dashInView] = useInView(0.15);
+  const [quickRef, quickInView] = useInView(0.15);
+  const [ppaRef, ppaInView] = useInView(0.15);
+  const [ctaRef, ctaInView] = useInView(0.3);
 
   return (
     <div className="homepage">
@@ -215,10 +269,15 @@ export default function HomePage() {
         )}
       </section>
 
+      {/* Signature ribbon divider — a nod to service-ribbon colors, ties the
+          banner to the identity band below without needing any copy */}
+      <div className="ribbon-divider" aria-hidden="true" />
+
       {/* ============================================================
           Welcome — school identity, lives below the banner now
           ============================================================ */}
       <section className="welcome-section">
+        <span className="welcome-monogram" aria-hidden="true">{monogram}</span>
         <div className="container welcome-inner">
           {info?.logo_url && (
             <img
@@ -228,8 +287,8 @@ export default function HomePage() {
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           )}
-          <span className="section-eyebrow"><SparkleIcon className="section-eyebrow-icon" />Welcome to GARMS</span>
           <h1 className="welcome-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
+          <span className="title-accent title-accent-center" aria-hidden="true" />
           <p className="welcome-subtitle">{info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}</p>
           <div className="welcome-actions">
             <Link to="/admissions" className="btn btn-primary btn-lg">Enroll Now<ArrowRightIcon className="btn-icon" /></Link>
@@ -241,11 +300,11 @@ export default function HomePage() {
       {/* ============================================================
           School Dashboard
           ============================================================ */}
-      <section className="section dashboard-section">
+      <section className="section dashboard-section" ref={dashRef}>
         <div className="container">
-          <div className="section-header">
-            <span className="section-eyebrow"><BookOpenIcon className="section-eyebrow-icon" />By the Numbers</span>
+          <div className={`section-header reveal${dashInView ? ' in-view' : ''}`}>
             <h2 className="section-title">School Dashboard</h2>
+            <span className="title-accent title-accent-center" aria-hidden="true" />
             <p className="section-subtitle">Key statistics and performance indicators for the current school year.</p>
           </div>
 
@@ -259,13 +318,13 @@ export default function HomePage() {
             </div>
           ) : (
             <>
-              <div className="kpi-grid">
+              <div className={`kpi-grid${dashInView ? ' in-view' : ''}`}>
                 {dashItems.map((item, i) => {
                   const { Icon, accent } = DASH_ICONS[i];
                   return (
                     <div key={item.label} className={`kpi-card accent-${accent}`}>
                       <div className="kpi-icon-wrap"><Icon className="kpi-icon" /></div>
-                      <p className={`kpi-value${item.small ? ' kpi-value-sm' : ''}`}>{item.value}</p>
+                      <KpiValue value={item.value} start={dashInView} small={item.small} />
                       <p className="kpi-label">{item.label}</p>
                     </div>
                   );
@@ -273,7 +332,7 @@ export default function HomePage() {
               </div>
 
               {grades.length > 0 && (
-                <div className="grade-table-card">
+                <div className={`grade-table-card reveal${dashInView ? ' in-view' : ''}`}>
                   <div className="grade-table-header">
                     <CalendarIcon className="grade-table-icon" /><h3>Grade-Level Breakdown</h3>
                   </div>
@@ -297,14 +356,14 @@ export default function HomePage() {
       {/* ============================================================
           Quick Access
           ============================================================ */}
-      <section className="section quick-links-section">
+      <section className="section quick-links-section" ref={quickRef}>
         <div className="container">
-          <div className="section-header">
-            <span className="section-eyebrow"><BookOpenIcon className="section-eyebrow-icon" />Navigate</span>
+          <div className={`section-header reveal${quickInView ? ' in-view' : ''}`}>
             <h2 className="section-title">Quick Access</h2>
+            <span className="title-accent title-accent-center" aria-hidden="true" />
             <p className="section-subtitle">Jump directly to the most visited sections of our portal.</p>
           </div>
-          <div className="quick-links-grid">
+          <div className={`quick-links-grid${quickInView ? ' in-view' : ''}`}>
             {QUICK_LINKS.map(({ label, desc, path, Icon, accent }) => (
               <Link key={label} to={path} className={`quick-link-card accent-${accent}`}>
                 <div className="ql-icon-wrap"><Icon className="ql-icon" /></div>
@@ -320,16 +379,16 @@ export default function HomePage() {
           Recent PPAs
           ============================================================ */}
       {ppas.length > 0 && (
-        <section className="section ppas-section">
+        <section className="section ppas-section" ref={ppaRef}>
           <div className="container">
             <div className="section-row">
-              <div className="section-header section-header-left">
-                <span className="section-eyebrow"><BookOpenIcon className="section-eyebrow-icon" />What's happening</span>
+              <div className={`section-header section-header-left reveal${ppaInView ? ' in-view' : ''}`}>
                 <h2 className="section-title">Programs &amp; Activities</h2>
+                <span className="title-accent title-accent-left" aria-hidden="true" />
               </div>
               <Link to="/ppas" className="view-all-link">View All<ArrowRightIcon className="view-all-icon" /></Link>
             </div>
-            <div className="ppas-grid">
+            <div className={`ppas-grid${ppaInView ? ' in-view' : ''}`}>
               {ppas.map(p => (
                 <div key={p.id} className="ppa-card">
                   {p.image_url && (
@@ -349,9 +408,9 @@ export default function HomePage() {
       {/* ============================================================
           CTA
           ============================================================ */}
-      <section className="cta-section">
+      <section className="cta-section" ref={ctaRef}>
         <div className="cta-pattern" />
-        <div className="container cta-inner">
+        <div className={`container cta-inner reveal${ctaInView ? ' in-view' : ''}`}>
           <div className="cta-text">
             <h2>Ready to join the GARMS community?</h2>
             <p>Take the first step toward quality education. Enroll today or reach out to learn more about our programs and offerings.</p>
