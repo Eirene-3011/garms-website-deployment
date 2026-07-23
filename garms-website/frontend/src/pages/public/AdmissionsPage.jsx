@@ -207,7 +207,6 @@ export default function AdmissionsPage() {
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="breadcrumb"><Link to="/">Home</Link> › Admissions</div>
           <h1>Admissions &amp; Enrollment</h1>
           <p>Everything you need to know about enrolling at GARMS</p>
         </div>
@@ -515,13 +514,6 @@ export default function AdmissionsPage() {
           </div>
 
           <div className="divider" />
-
-          {/* Contact CTA — internal link only */}
-          <div className="cta-panel">
-            <div className="cta-panel-icon" aria-hidden="true"><IconPhone size={20} /></div>
-            <p>Have questions about enrollment? Our staff will be happy to assist you.</p>
-            <Link to="/contact" className="btn btn-outline">Contact the School</Link>
-          </div>
 
         </div>
       </section>
