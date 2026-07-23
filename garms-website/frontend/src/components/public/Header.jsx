@@ -47,9 +47,7 @@ const NAV_ITEMS = [
   {
     label: "Students' Corner", path: '/students-corner',
     children: [
-      { label: 'Commendations', path: '/students-corner?tab=commendation' },
       { label: 'Featured Student', path: '/students-corner?tab=featured_student' },
-      { label: 'Student Accomplishments', path: '/students-corner?tab=accomplishment' },
     ]
   },
   { label: 'Accomplishments', path: '/accomplishments' },
