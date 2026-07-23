@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
@@ -42,6 +42,7 @@ export default function AboutPage() {
   const [content, setContent] = useState({});
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const revealScope = useRef(null);
 
   useEffect(() => {
     Promise.all([
@@ -55,6 +56,37 @@ export default function AboutPage() {
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
+  // Progressive-enhancement scroll reveal. If JS never runs (or a user
+  // prefers reduced motion), everything is already visible by default —
+  // elements only dim/lift once we've confirmed we can animate them back in.
+  useEffect(() => {
+    if (loading || !revealScope.current) return;
+
+    const targets = revealScope.current.querySelectorAll('.reveal-target');
+    if (!targets.length) return;
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
+
+    targets.forEach(el => el.classList.add('reveal-pending'));
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.remove('reveal-pending');
+            entry.target.classList.add('reveal-in');
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -60px 0px' }
+    );
+
+    targets.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, [loading]);
+
   const infoRows = info ? [
     { label: 'School Name', val: info.school_name, Icon: IconBuilding },
     { label: 'School ID', val: info.school_id_no, mono: true, Icon: IconHash },
@@ -67,9 +99,10 @@ export default function AboutPage() {
   ] : [];
 
   return (
-    <div>
+    <div ref={revealScope}>
       {/* Hero — subtitle/tagline removed per revision; only the page title remains */}
       <div className="page-header">
+        <span className="hero-monogram" aria-hidden="true">G</span>
         <div className="container">
           <div className="breadcrumb"><Link to="/">Home</Link> › About Us</div>
           <h1>About GARMS</h1>
@@ -80,39 +113,51 @@ export default function AboutPage() {
       {/* School info tiles */}
       <section className="section-sm surface-grid" style={{ background: 'var(--gray-50)' }}>
         <div className="container">
-          {loading ? (
-            <div className="info-panel">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div className="info-tile" key={i}>
-                  <div className="skeleton" style={{ width: '50%', height: 10, marginBottom: 10 }} />
-                  <div className="skeleton" style={{ width: '80%', height: 14 }} />
-                </div>
-              ))}
+          <div className="facts-shell card">
+            <div className="facts-shell-head">
+              <span className="section-eyebrow">
+                <IconHash size={14} />
+                Quick Facts
+              </span>
             </div>
-          ) : info && (
-            <div className="info-panel">
-              {infoRows.map(r => (
-                <div key={r.label} className="info-tile">
-                  <div className="info-tile-head">
-                    <span className="info-tile-icon"><r.Icon size={16} /></span>
-                    <p className="info-tile-label">{r.label}</p>
+
+            {loading ? (
+              <div className="info-panel">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div className="info-tile" key={i}>
+                    <div className="skeleton" style={{ width: '50%', height: 10, marginBottom: 10 }} />
+                    <div className="skeleton" style={{ width: '80%', height: 14 }} />
                   </div>
-                  {r.badge ? (
-                    <span className="badge badge-red">{r.val || '—'}</span>
-                  ) : (
-                    <p className={`info-tile-value${r.mono ? ' font-mono' : ''}`}>{r.val || '—'}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            ) : info && (
+              <div className="info-panel">
+                {infoRows.map((r, i) => (
+                  <div
+                    key={r.label}
+                    className="info-tile reveal-target"
+                    style={{ transitionDelay: `${i * 40}ms` }}
+                  >
+                    <div className="info-tile-head">
+                      <span className="info-tile-icon"><r.Icon size={16} /></span>
+                      <p className="info-tile-label">{r.label}</p>
+                    </div>
+                    {r.badge ? (
+                      <span className="badge badge-red">{r.val || '—'}</span>
+                    ) : (
+                      <p className={`info-tile-value${r.mono ? ' font-mono' : ''}`}>{r.val || '—'}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
       {/* Identity pillars + School Profile sections */}
       <section className="section">
         <div className="container">
-          <span className="section-eyebrow">Our Identity</span>
           <h2 className="section-title">School Profile</h2>
           <p className="section-subtitle">
             The pillars and history that define General Artemio Ricarte Memorial School.
@@ -140,8 +185,13 @@ export default function AboutPage() {
             </div>
           ) : (
             <div className="timeline">
-              {SECTIONS.map(sec => (
-                <div key={sec.key} id={sec.key} className="timeline-item">
+              {SECTIONS.map((sec, i) => (
+                <div
+                  key={sec.key}
+                  id={sec.key}
+                  className="timeline-item reveal-target"
+                  style={{ transitionDelay: `${(i % 4) * 60}ms` }}
+                >
                   <div className="timeline-node" aria-hidden="true">
                     <sec.Icon size={22} />
                   </div>
@@ -166,8 +216,13 @@ export default function AboutPage() {
           {/* Sub-page links */}
           <div className="divider-stitch" />
           <div className="grid-auto">
-            {SUB_PAGES.map(l => (
-              <Link key={l.label} to={l.path} className="card subpage-card card-body">
+            {SUB_PAGES.map((l, i) => (
+              <Link
+                key={l.label}
+                to={l.path}
+                className="card subpage-card card-body reveal-target"
+                style={{ transitionDelay: `${i * 70}ms` }}
+              >
                 <div className="subpage-icon" aria-hidden="true">
                   <l.Icon size={22} />
                 </div>
