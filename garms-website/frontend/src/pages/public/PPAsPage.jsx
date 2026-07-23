@@ -31,7 +31,6 @@ export default function PPAsPage() {
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="breadcrumb"><Link to="/">Home</Link> › Programs, Projects &amp; Activities</div>
           <h1>Programs, Projects &amp; Activities</h1>
           <p>School programs, annual projects, and learning activities at GARMS</p>
         </div>
