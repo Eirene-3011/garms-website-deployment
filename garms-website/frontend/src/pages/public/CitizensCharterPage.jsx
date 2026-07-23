@@ -1,224 +1,258 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
-import { IconScroll, IconDownload, IconScale, IconExternalLink } from '../../components/Icons';
+import { IconAward, IconCalendar, IconMaximize, IconX } from '../../components/Icons';
 
-export default function CitizensCharterPage() {
-  const [documents, setDocuments] = useState([]);
+export default function AccomplishmentsPage() {
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lightbox, setLightbox] = useState(null);
 
   useEffect(() => {
-    api.get('/charter')
-      .then(r => setDocuments(Array.isArray(r.data) ? r.data : []))
-      .catch(() => {})
+    api.get('/accomplishments')
+      .then(response => setItems(response.data))
+      .catch(() => setItems([]))
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!lightbox) return undefined;
+
+    const handleKeyDown = event => {
+      if (event.key === 'Escape') setLightbox(null);
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [lightbox]);
+
+  const openLightbox = useCallback((src, alt) => {
+    setLightbox({ src, alt });
+  }, []);
+
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+
+  const formatDate = date => {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString('en-PH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
   return (
-    <div style={{ background: '#fafafa', minHeight: '100vh' }}>
-      <div className="page-header" style={{ padding: '60px 0', background: '#fff', borderBottom: '1px solid var(--gray-100)' }}>
+    <div style={{ background: '#fcfcfc', minHeight: '100vh' }}>
+      <div className="page-header" style={{ padding: '48px 0', borderBottom: '1px solid var(--gray-100)', background: '#fff' }}>
         <div className="container">
-          <div className="page-header-icon" style={{ 
-            width: 56, height: 56, background: 'var(--red-pale)', 
-            borderRadius: 16, display: 'flex', alignItems: 'center', 
-            justifyContent: 'center', marginBottom: 20, color: 'var(--red-primary)' 
-          }}>
-            <IconScroll size={32} />
-          </div>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--gray-900)', marginBottom: 12 }}>
-            Citizen's Charter
+          <h1 style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--gray-900)', marginBottom: 8 }}>
+            School Accomplishments
           </h1>
-          <p style={{ fontSize: '1.1rem', color: 'var(--gray-500)', maxWidth: 600, lineHeight: 1.6 }}>
-            Our commitment to efficient, transparent, and accountable public service, 
-            ensuring every citizen receives the quality of care they deserve.
+          <p style={{ fontSize: '1.05rem', color: 'var(--gray-500)', maxWidth: 600 }}>
+            Awards, recognitions, and milestones achieved by GARMS
           </p>
         </div>
       </div>
 
-      <section className="section" style={{ padding: '48px 0' }}>
-        <div className="container" style={{ maxWidth: 1000 }}>
-          <div className="charter-badges" style={{ display: 'flex', gap: 12, marginBottom: 40 }}>
-            <span className="charter-badge" style={{
+      <section className="section" style={{ padding: '40px 0' }}>
+        <div className="container">
+          <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '8px 16px', borderRadius: 99, background: 'var(--red-pale)',
-              color: 'var(--red-dark)', fontSize: '0.8rem', fontWeight: 700,
+              padding: '8px 16px', borderRadius: 12,
+              background: 'var(--red-pale)', color: 'var(--red-dark)',
+              fontSize: '0.85rem', fontWeight: 750,
               border: '1px solid rgba(var(--red-primary-rgb), 0.1)'
             }}>
-              <IconScale size={14} /> RA 11032 — EODB Act of 2018
+              <IconAward size={16} /> Awards and Recognitions
             </span>
-            <span className="charter-badge" style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '8px 16px', borderRadius: 99, background: 'rgba(59, 130, 246, 0.08)',
-              color: '#1e40af', fontSize: '0.8rem', fontWeight: 700,
-              border: '1px solid rgba(59, 130, 246, 0.1)'
-            }}>
-              <IconScale size={14} /> ARTA — Anti-Red Tape Act
-            </span>
+            {!loading && items.length > 0 && (
+              <span style={{ fontSize: '0.8rem', color: 'var(--gray-400)', fontWeight: 600 }}>
+                {items.length} TOTAL ENTRIES
+              </span>
+            )}
           </div>
 
           {loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="card" style={{ padding: 28, borderRadius: 16, background: '#fff', border: '1px solid var(--gray-100)' }}>
-                  <div className="skeleton" style={{ width: '40%', height: 20, marginBottom: 16, borderRadius: 4 }} />
-                  <div className="skeleton" style={{ width: '100%', height: 12, marginBottom: 10, borderRadius: 4 }} />
-                  <div className="skeleton" style={{ width: '80%', height: 12, borderRadius: 4 }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="card" style={{ overflow: 'hidden', borderRadius: 16, border: '1px solid var(--gray-100)' }}>
+                  <div className="skeleton" style={{ width: '100%', height: 240 }} />
+                  <div className="card-body" style={{ padding: 24 }}>
+                    <div className="skeleton" style={{ width: '75%', height: 20, marginBottom: 12 }} />
+                    <div className="skeleton" style={{ width: '100%', height: 12, marginBottom: 8 }} />
+                    <div className="skeleton" style={{ width: '60%', height: 12 }} />
+                  </div>
                 </div>
               ))}
             </div>
-          ) : documents.length === 0 ? (
+          ) : items.length === 0 ? (
             <div className="alert" style={{ 
-              padding: '32px', background: '#fff', borderRadius: 16, 
-              border: '1px solid var(--gray-100)', textAlign: 'center',
-              color: 'var(--gray-500)'
+              padding: '40px', background: '#fff', borderRadius: 16, 
+              border: '1px dashed var(--gray-200)', textAlign: 'center',
+              color: 'var(--gray-400)'
             }}>
-              Citizen's Charter documents are being prepared. Please check back soon or contact the school office.
+              No accomplishments have been posted yet. Please check back soon.
             </div>
           ) : (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 750, color: 'var(--gray-900)' }}>Official Documents</h2>
-                <p style={{ color: 'var(--gray-400)', fontSize: '0.85rem', fontWeight: 600 }}>
-                  {documents.length} OF 16 PUBLISHED
-                </p>
-              </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
-                {documents.map((doc, i) => (
-                  <div 
-                    key={doc.id} 
-                    className="card-hover-effect"
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
+              {items.map(item => {
+                const imageSrc = item.image_url ? getImageUrl(item.image_url) : null;
+
+                return (
+                  <article
+                    key={item.id}
+                    className="accomplishment-card"
                     style={{ 
-                      padding: 32, display: 'flex', flexDirection: 'column', gap: 16,
-                      background: '#fff', borderRadius: 20, border: '1px solid var(--gray-100)',
-                      transition: 'all 0.3s ease', position: 'relative', overflow: 'hidden'
+                      display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                      background: '#fff', borderRadius: 16, border: '1px solid var(--gray-100)',
+                      transition: 'all 0.3s ease'
                     }}
                   >
-                    <div style={{ 
-                      position: 'absolute', top: 0, right: 0, width: 60, height: 60, 
-                      background: 'var(--red-pale)', opacity: 0.4, 
-                      clipPath: 'polygon(100% 0, 0 0, 100% 100%)' 
-                    }} />
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <span style={{
-                        width: 36, height: 36, background: 'var(--red-primary)',
-                        borderRadius: 10, display: 'flex', alignItems: 'center', 
-                        justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: '0.85rem'
-                      }}>
-                        {String(i + 1).padStart(2, '0')}
-                      </span>
-                      <h3 style={{ fontWeight: 750, fontSize: '1rem', color: 'var(--gray-900)', margin: 0, lineHeight: 1.4 }}>
-                        {doc.title}
-                      </h3>
-                    </div>
-
-                    {doc.description && (
-                      <p style={{ fontSize: '0.88rem', color: 'var(--gray-500)', margin: 0, lineHeight: 1.6 }}>
-                        {doc.description}
-                      </p>
+                    {imageSrc && (
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        title="Click to enlarge"
+                        aria-label={`Enlarge image: ${item.title}`}
+                        onClick={() => openLightbox(imageSrc, item.title)}
+                        onKeyDown={event => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            openLightbox(imageSrc, item.title);
+                          }
+                        }}
+                        style={{ position: 'relative', overflow: 'hidden', cursor: 'zoom-in' }}
+                      >
+                        <img
+                          src={imageSrc}
+                          alt={item.title}
+                          onError={event => { event.currentTarget.parentElement.style.display = 'none'; }}
+                          style={{
+                            width: '100%', height: 240, objectFit: 'cover', display: 'block',
+                            transition: 'transform 0.5s ease',
+                          }}
+                          className="card-image"
+                        />
+                        <div style={{
+                          position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)',
+                          opacity: 0, transition: 'opacity 0.3s ease',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: '#fff'
+                        }} className="image-overlay">
+                          <IconMaximize size={24} />
+                        </div>
+                      </div>
                     )}
 
-                    <div style={{ marginTop: 'auto', paddingTop: 12 }}>
-                      {doc.pdf_url ? (
-                        <a
-                          href={getImageUrl(doc.pdf_url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-enhanced"
-                          style={{ 
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                            padding: '12px 20px', borderRadius: 12, background: 'var(--gray-900)',
-                            color: '#fff', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none',
-                            transition: 'background 0.2s ease'
-                          }}
-                        >
-                          <IconDownload size={16} />
-                          View Document
-                        </a>
-                      ) : (
-                        <div style={{ 
-                          padding: '12px', borderRadius: 12, background: 'var(--gray-50)',
-                          border: '1px dashed var(--gray-200)', textAlign: 'center'
+                    <div className="card-body" style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 12, padding: 28 }}>
+                      <h2 style={{
+                        margin: 0, color: 'var(--gray-900)',
+                        fontSize: '1.1rem', fontWeight: 800, lineHeight: 1.4,
+                      }}>
+                        {item.title}
+                      </h2>
+                      
+                      {item.description && (
+                        <p style={{
+                          margin: 0, color: 'var(--gray-600)',
+                          fontSize: '0.9rem', lineHeight: 1.6,
                         }}>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--gray-400)', fontWeight: 500 }}>
-                            Pending Upload
-                          </span>
-                        </div>
+                          {item.description}
+                        </p>
                       )}
+
+                      <div style={{ 
+                        marginTop: 'auto', paddingTop: 16, borderTop: '1px solid var(--gray-50)',
+                        display: 'flex', flexDirection: 'column', gap: 8 
+                      }}>
+                        {item.awarding_body && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--gray-500)', fontWeight: 600 }}>
+                            <IconAward size={14} style={{ color: 'var(--red-primary)' }} />
+                            {item.awarding_body}
+                          </div>
+                        )}
+                        {item.award_date && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem', color: 'var(--gray-400)' }}>
+                            <IconCalendar size={14} />
+                            {formatDate(item.award_date)}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </>
+                  </article>
+                );
+              })}
+            </div>
           )}
-
-          <div style={{ margin: '80px 0 40px', height: 1, background: 'linear-gradient(to right, transparent, var(--gray-200), transparent)' }} />
-
-          <div className="legal-section" style={{ 
-            background: '#fff', borderRadius: 24, padding: '40px', 
-            border: '1px solid var(--gray-100)', display: 'flex', gap: 32,
-            alignItems: 'flex-start'
-          }}>
-            <div style={{ 
-              flexShrink: 0, width: 64, height: 64, background: 'var(--red-pale)', 
-              borderRadius: 20, display: 'flex', alignItems: 'center', 
-              justifyContent: 'center', color: 'var(--red-primary)' 
-            }}>
-              <IconScale size={32} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--gray-900)', marginBottom: 16 }}>
-                Legal Basis & Transparency
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-                <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)', lineHeight: 1.7, margin: 0 }}>
-                  Republic Act No. 11032 (Ease of Doing Business and Efficient Government Service Delivery Act
-                  of 2018), Section 6, requires all government agencies, including public schools, to publish
-                  their Citizen's Charter on their official website.
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)', lineHeight: 1.7, margin: 0 }}>
-                    This requirement stems from the earlier Anti-Red Tape Act (RA 9485) and is consistent with 
-                    Executive Order No. 2, s. 2016 on Freedom of Information.
-                  </p>
-                  <a
-                    href="https://www.deped.gov.ph"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ 
-                      color: 'var(--red-primary)', fontWeight: 700, fontSize: '0.9rem',
-                      display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none'
-                    }}
-                  >
-                    Official DepEd Portal <IconExternalLink size={14} />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
+      {lightbox && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Enlarged image: ${lightbox.alt}`}
+          onClick={closeLightbox}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 24, background: 'rgba(0, 0, 0, 0.95)',
+            cursor: 'zoom-out', animation: 'fadeIn 0.2s ease-out',
+            backdropFilter: 'blur(8px)'
+          }}
+        >
+          <button
+            type="button"
+            aria-label="Close enlarged image"
+            onClick={closeLightbox}
+            style={{
+              position: 'fixed', top: 24, right: 24,
+              width: 48, height: 48, border: 'none',
+              borderRadius: 12, background: 'rgba(255,255,255,0.1)',
+              color: '#fff', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseOver={event => { event.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
+            onMouseOut={event => { event.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+          >
+            <IconX size={24} />
+          </button>
+          <img
+            src={lightbox.src}
+            alt={lightbox.alt}
+            onClick={event => event.stopPropagation()}
+            style={{
+              maxWidth: '90vw', maxHeight: '85vh', objectFit: 'contain',
+              borderRadius: 12, boxShadow: '0 32px 64px rgba(0,0,0,0.5)',
+              cursor: 'default',
+            }}
+          />
+        </div>
+      )}
+
       <style>{`
-        .card-hover-effect:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+        .accomplishment-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.04);
           border-color: var(--red-pale) !important;
         }
-        .btn-enhanced:hover {
-          background: var(--red-primary) !important;
+        .accomplishment-card:hover .card-image {
+          transform: scale(1.05);
         }
-        @media (max-width: 768px) {
-          .legal-section {
-            flex-direction: column;
-            padding: 24px;
-          }
-          .legal-section > div:last-child > div {
-            grid-template-columns: 1fr;
-            gap: 16px;
-          }
+        .accomplishment-card:hover .image-overlay {
+          opacity: 1 !important;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}</style>
     </div>
