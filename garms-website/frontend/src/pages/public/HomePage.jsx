@@ -189,7 +189,6 @@ function KpiValue({ value, start, small }) {
 }
 
 export default function HomePage() {
-  const [info, setInfo] = useState(null);
   const [dashboard, setDashboard] = useState(null);
   const [ppas, setPpas] = useState([]);
   const [loadingDash, setLoadingDash] = useState(true);
@@ -200,7 +199,6 @@ export default function HomePage() {
   const [autoplay, setAutoplay] = useState(true);
 
   useEffect(() => {
-    api.get('/school-info').then(r => setInfo(r.data)).catch(() => {});
     api.get('/school-dashboard').then(r => setDashboard(r.data)).catch(() => {}).finally(() => setLoadingDash(false));
     api.get('/ppas').then(r => setPpas(r.data.slice(0, 3))).catch(() => {});
     // Fetch only seasonal banners — exclude general banners
@@ -235,7 +233,6 @@ export default function HomePage() {
   ];
 
   const hasBanners = banners.length > 0;
-  const monogram = (info?.school_name || 'GARMS').trim().charAt(0).toUpperCase() || 'G';
 
   const [dashRef, dashInView] = useInView(0.15);
   const [quickRef, quickInView] = useInView(0.15);
@@ -293,30 +290,6 @@ export default function HomePage() {
       {/* Signature ribbon divider — a nod to service-ribbon colors, ties the
           banner to the identity band below without needing any copy */}
       <div className="ribbon-divider" aria-hidden="true" />
-
-      {/* ============================================================
-          Welcome — school identity, lives below the banner now
-          ============================================================ */}
-      <section className="welcome-section">
-        <span className="welcome-monogram" aria-hidden="true">{monogram}</span>
-        <div className="container welcome-inner">
-          {info?.logo_url && (
-            <img
-              src={getImageUrl(info.logo_url)}
-              alt="GARMS Logo"
-              className="welcome-logo"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-          )}
-          <h1 className="welcome-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
-          <span className="title-accent title-accent-center" aria-hidden="true" />
-          <p className="welcome-subtitle">{info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}</p>
-          <div className="welcome-actions">
-            <Link to="/admissions" className="btn btn-primary btn-lg">Enroll Now<ArrowRightIcon className="btn-icon" /></Link>
-            <Link to="/about" className="btn btn-outline btn-lg">Learn More</Link>
-          </div>
-        </div>
-      </section>
 
       {/* ============================================================
           School Dashboard
