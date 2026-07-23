@@ -1,5 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend, RadialBarChart, RadialBar,
+} from 'recharts';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
 import './HomePage.css';
@@ -95,6 +99,22 @@ const CalendarIcon = (p) => (
 const SparkleIcon = (p) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z" />
+  </svg>
+);
+const BookOpenIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
+const UsersRoundIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+const PieChartIcon = (p) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" />
   </svg>
 );
 
@@ -197,6 +217,21 @@ function useTilt(intensity = 8) {
   return { cardRef, handleMouseMove, handleMouseLeave };
 }
 
+/* ─── Custom Chart Tooltip ───────────────────────────────────────────── */
+function ChartTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className="chart-tooltip">
+      <p className="chart-tooltip-label">{label}</p>
+      {payload.map((entry, idx) => (
+        <p key={idx} className="chart-tooltip-value" style={{ color: entry.color || entry.fill }}>
+          {entry.name}: {entry.value}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [dashboard, setDashboard] = useState(null);
   const [ppas, setPpas] = useState([]);
@@ -242,7 +277,42 @@ export default function HomePage() {
 
   const hasBanners = banners.length > 0;
 
-  const [dashRef, dashInView] = useInView(0.15);
+  /* ─── Chart data derived from dashboard ──────────────────────────── */
+  const barChartData = useMemo(() => {
+    if (!grades || grades.length === 0) return [];
+    return grades.map(g => ({
+      name: g.grade_level,
+      sections: Number(g.sections_count) || 0,
+      classrooms: Number(g.classrooms_count) || 0,
+    }));
+  }, [grades]);
+
+  const pieChartData = useMemo(() => {
+    const teaching = Number(dashStats.teaching_personnel) || 0;
+    const nonTeaching = Number(dashStats.non_teaching_personnel) || 0;
+    if (teaching === 0 && nonTeaching === 0) return [];
+    return [
+      { name: 'Teaching', value: teaching, color: '#c41e3a' },
+      { name: 'Non-Teaching', value: nonTeaching, color: '#c99a3b' },
+    ];
+  }, [dashStats.teaching_personnel, dashStats.non_teaching_personnel]);
+
+  const enrollmentPieData = useMemo(() => {
+    if (barChartData.length === 0) return [];
+    return barChartData.map(g => ({ name: g.name, value: g.sections, color: '#c41e3a' }));
+  }, [barChartData]);
+
+  /* ─── Summary stats for the new info strip ─────────────────────── */
+  const summaryStats = useMemo(() => {
+    const totalSections = grades.reduce((s, g) => s + (Number(g.sections_count) || 0), 0);
+    const totalClassrooms = grades.reduce((s, g) => s + (Number(g.classrooms_count) || 0), 0);
+    const enrollment = Number(dashStats.enrollment_count) || 0;
+    const ratio = totalSections > 0 ? Math.round((enrollment / totalSections) * 10) / 10 : 0;
+    return { totalSections, totalClassrooms, avgPerSection: ratio };
+  }, [grades, dashStats.enrollment_count]);
+
+  const [dashRef, dashInView] = useInView(0.1);
+  const [chartRef, chartInView] = useInView(0.15);
   const [quickRef, quickInView] = useInView(0.15);
   const [ppaRef, ppaInView] = useInView(0.15);
   const [ctaRef, ctaInView] = useInView(0.3);
@@ -274,6 +344,18 @@ export default function HomePage() {
             {/* Vignette overlay for cinematic depth */}
             <div className="hero-vignette" />
 
+            {/* Hero content overlay — school identity */}
+            <div className="hero-content-overlay">
+              <div className="hero-content-inner">
+                <div className="hero-badge-row">
+                  <span className="hero-badge-pill">Welcome to</span>
+                  <span className="hero-badge-pill hero-badge-pill-gold">GARMS</span>
+                </div>
+                <h1 className="hero-headline">Garcia Academy of Rizal, Makati City</h1>
+                <p className="hero-tagline">Nurturing minds, building futures — excellence in every classroom.</p>
+              </div>
+            </div>
+
             {banners.length > 1 && (
               <>
                 <button className="hero-nav hero-nav-prev" onClick={prevBanner} aria-label="Previous banner"><ChevronLeftIcon /></button>
@@ -302,7 +384,7 @@ export default function HomePage() {
       <div className="ribbon-divider" aria-hidden="true" />
 
       {/* ============================================================
-          SCHOOL DASHBOARD
+          SCHOOL DASHBOARD — KPI Cards + Charts
           ============================================================ */}
       <section className="section dashboard-section" ref={dashRef}>
         <div className="container">
@@ -325,6 +407,7 @@ export default function HomePage() {
             </div>
           ) : (
             <>
+              {/* KPI Cards */}
               <div className={`kpi-grid${dashInView ? ' in-view' : ''}`}>
                 {dashItems.map((item, i) => {
                   const { Icon, accent } = DASH_ICONS[i];
@@ -340,23 +423,140 @@ export default function HomePage() {
                 })}
               </div>
 
-              {grades.length > 0 && (
-                <div className={`grade-table-card reveal${dashInView ? ' in-view' : ''}`}>
-                  <div className="grade-table-header">
-                    <CalendarIcon className="grade-table-icon" /><h3>Grade-Level Breakdown</h3>
-                  </div>
-                  <div className="grade-table-wrap">
-                    <table className="grade-table">
-                      <thead><tr><th>Grade Level</th><th className="td-center">Sections</th><th className="td-center">Classrooms</th></tr></thead>
-                      <tbody>
-                        {grades.map(g => (
-                          <tr key={g.grade_level}><td className="td-bold">{g.grade_level}</td><td className="td-center">{g.sections_count}</td><td className="td-center">{g.classrooms_count}</td></tr>
-                        ))}
-                      </tbody>
-                    </table>
+              {/* ─── Summary Info Strip ──────────────────────────── */}
+              <div className={`dash-summary-strip${dashInView ? ' in-view' : ''}`}>
+                <div className="dash-summary-card">
+                  <div className="dash-summary-icon"><BookOpenIcon /></div>
+                  <div className="dash-summary-content">
+                    <span className="dash-summary-number">{summaryStats.totalSections}</span>
+                    <span className="dash-summary-label">Total Sections</span>
                   </div>
                 </div>
-              )}
+                <div className="dash-summary-card">
+                  <div className="dash-summary-icon"><BuildingIcon /></div>
+                  <div className="dash-summary-content">
+                    <span className="dash-summary-number">{summaryStats.totalClassrooms}</span>
+                    <span className="dash-summary-label">Classrooms</span>
+                  </div>
+                </div>
+                <div className="dash-summary-card">
+                  <div className="dash-summary-icon"><UsersRoundIcon /></div>
+                  <div className="dash-summary-content">
+                    <span className="dash-summary-number">{summaryStats.avgPerSection || '—'}</span>
+                    <span className="dash-summary-label">Avg Students / Section</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ─── Charts Section ──────────────────────────────── */}
+              <div className={`charts-section${chartInView ? ' in-view' : ''}`} ref={chartRef}>
+                <div className="charts-header">
+                  <div className="charts-header-left">
+                    <div className="charts-header-row">
+                      <span className="section-eyebrow">Visual Insights</span>
+                      <h3 className="charts-title">Enrollment & Personnel Analytics</h3>
+                    </div>
+                    <p className="charts-subtitle">Grade-level distribution and staff composition at a glance.</p>
+                  </div>
+                  <div className="charts-legend-badge">
+                    <PieChartIcon className="charts-badge-icon" />
+                    <span>Live Data</span>
+                  </div>
+                </div>
+
+                <div className="charts-grid">
+                  {/* Bar Chart — Grade-Level Breakdown */}
+                  <div className="chart-card chart-card-lg">
+                    <div className="chart-card-header">
+                      <div className="chart-card-title-wrap">
+                        <CalendarIcon className="chart-card-icon" />
+                        <h4>Grade-Level Breakdown</h4>
+                      </div>
+                      <div className="chart-card-legend">
+                        <span className="legend-dot legend-dot-red" />
+                        <span>Sections</span>
+                        <span className="legend-dot legend-dot-gold" />
+                        <span>Classrooms</span>
+                      </div>
+                    </div>
+                    <div className="chart-container">
+                      {barChartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={320}>
+                          <BarChart data={barChartData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }} barCategoryGap="20%">
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--gray-200)" />
+                            <XAxis dataKey="name" tick={{ fontSize: 13, fontWeight: 600, fill: 'var(--gray-600)' }} axisLine={false} tickLine={false} />
+                            <YAxis tick={{ fontSize: 12, fill: 'var(--gray-500)' }} axisLine={false} tickLine={false} />
+                            <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(196, 30, 58, 0.04)' }} />
+                            <Bar dataKey="sections" name="Sections" fill="#c41e3a" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                            <Bar dataKey="classrooms" name="Classrooms" fill="#c99a3b" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="chart-empty">No grade data available</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Pie Chart — Personnel Distribution */}
+                  <div className="chart-card chart-card-sm">
+                    <div className="chart-card-header">
+                      <div className="chart-card-title-wrap">
+                        <PieChartIcon className="chart-card-icon" />
+                        <h4>Personnel Distribution</h4>
+                      </div>
+                    </div>
+                    <div className="chart-container chart-container-pie">
+                      {pieChartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={pieChartData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={65}
+                              outerRadius={105}
+                              paddingAngle={4}
+                              dataKey="value"
+                              nameKey="name"
+                              stroke="none"
+                              animationBegin={0}
+                              animationDuration={1200}
+                            >
+                              {pieChartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip content={<ChartTooltip />} />
+                            <Legend
+                              verticalAlign="bottom"
+                              iconType="circle"
+                              iconSize={10}
+                              wrapperStyle={{ fontSize: '0.85rem', fontWeight: 600, paddingTop: '8px' }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="chart-empty">No personnel data available</div>
+                      )}
+                    </div>
+                    {/* Personnel count badges */}
+                    {pieChartData.length > 0 && (
+                      <div className="personnel-badges">
+                        <div className="personnel-badge personnel-badge-teaching">
+                          <span className="personnel-badge-dot" style={{ background: '#c41e3a' }} />
+                          <span className="personnel-badge-label">Teaching</span>
+                          <span className="personnel-badge-value">{Number(dashStats.teaching_personnel) || 0}</span>
+                        </div>
+                        <div className="personnel-badge personnel-badge-nonteaching">
+                          <span className="personnel-badge-dot" style={{ background: '#c99a3b' }} />
+                          <span className="personnel-badge-label">Non-Teaching</span>
+                          <span className="personnel-badge-value">{Number(dashStats.non_teaching_personnel) || 0}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </div>
