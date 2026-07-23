@@ -18,7 +18,6 @@ export default function CommitteesPage() {
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="breadcrumb"><Link to="/">Home</Link> › <Link to="/about">About Us</Link> › Committees</div>
           <div className="page-header-icon"><IconUsers size={26} /></div>
           <h1>Committees &amp; Councils</h1>
           <p>PTA, HPTA, SPTA, SSG/SPG and school governance bodies</p>
