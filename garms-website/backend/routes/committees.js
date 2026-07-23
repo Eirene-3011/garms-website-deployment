@@ -46,25 +46,25 @@ router.delete('/:id', authenticateAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Members — POST supports photo upload
+// Members — POST supports photo upload + optional section_name/adviser_name
 router.post('/:committeeId/members', authenticateAdmin, upload.single('photo'), async (req, res) => {
-  const { full_name, role, contact_no } = req.body;
+  const { full_name, role, contact_no, section_name, adviser_name } = req.body;
   const photo_url = req.file ? req.file.path : null;
   try {
     const [r] = await db.query(
-      'INSERT INTO committee_members (committee_id, full_name, role, contact_no, photo_url) VALUES (?, ?, ?, ?, ?)',
-      [req.params.committeeId, full_name, role, contact_no, photo_url]
+      'INSERT INTO committee_members (committee_id, full_name, role, section_name, adviser_name, contact_no, photo_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [req.params.committeeId, full_name, role, section_name || null, adviser_name || null, contact_no, photo_url]
     );
     res.status(201).json({ id: r.insertId });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 router.put('/members/:id', authenticateAdmin, upload.single('photo'), async (req, res) => {
-  const { full_name, role, contact_no } = req.body;
+  const { full_name, role, contact_no, section_name, adviser_name } = req.body;
   const photo_url = req.file ? req.file.path : undefined;
   try {
-    const sets = ['full_name=?', 'role=?', 'contact_no=?'];
-    const vals = [full_name, role, contact_no];
+    const sets = ['full_name=?', 'role=?', 'contact_no=?', 'section_name=?', 'adviser_name=?'];
+    const vals = [full_name, role, contact_no, section_name || null, adviser_name || null];
     if (photo_url) { sets.push('photo_url=?'); vals.push(photo_url); }
     vals.push(req.params.id);
     await db.query(`UPDATE committee_members SET ${sets.join(',')} WHERE id=?`, vals);
