@@ -2335,3 +2335,100 @@ tr:hover td { background: var(--gray-50); }
   .staff-modal { padding: var(--space-8) var(--space-5) var(--space-6); }
   .staff-modal-photo { width: 128px; height: 128px; }
 }
+
+/* ============================================================
+   About page v3 — wow-factor enhancements
+   Hero monogram watermark, a single "spec sheet" facts panel,
+   an alternating spine timeline for the identity pillars, and a
+   progressive-enhancement scroll reveal used across the page.
+   Appended to the end of styles.css — nothing existing is edited.
+   ============================================================ */
+
+/* ---- Hero monogram watermark ----
+   A single oversized initial sits low-opacity behind the hero copy —
+   one quiet, deliberate flourish rather than added text or clutter. */
+.hero-monogram {
+  position: absolute;
+  top: 50%;
+  right: 3%;
+  transform: translateY(-46%);
+  z-index: 0;
+  font-size: clamp(140px, 20vw, 280px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  color: rgba(255, 255, 255, 0.09);
+  pointer-events: none;
+  user-select: none;
+}
+
+@media (max-width: 768px) {
+  .hero-monogram { display: none; }
+}
+
+/* ---- Quick Facts "spec sheet" shell ----
+   Wraps the existing .info-panel in a single bordered surface so the
+   facts read as one cohesive record rather than loose floating tiles. */
+.facts-shell {
+  padding: var(--space-8) var(--space-8) var(--space-6);
+}
+
+.facts-shell-head {
+  margin-bottom: var(--space-5);
+}
+
+.facts-shell .section-eyebrow {
+  margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .facts-shell { padding: var(--space-6) var(--space-5) var(--space-4); }
+}
+
+/* ---- Alternating spine timeline (desktop) ----
+   The identity pillars are related facets of one whole, so instead of a
+   single left-aligned list they run along a central spine and alternate
+   left/right — reads like an editorial dossier rather than a form. The
+   original single-column layout is preserved below 900px. */
+@media (min-width: 900px) {
+  .timeline::before {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .timeline-item {
+    display: grid;
+    grid-template-columns: 1fr 64px 1fr;
+    align-items: start;
+    gap: 0 var(--space-8);
+  }
+
+  .timeline-node {
+    grid-column: 2;
+    margin: 0 auto;
+  }
+
+  .timeline-content {
+    grid-column: 1;
+    padding-top: 0;
+  }
+
+  .timeline-item:nth-child(even) .timeline-content {
+    grid-column: 3;
+  }
+}
+
+/* ---- Progressive-enhancement scroll reveal ----
+   Elements are fully visible by default. JS only adds "reveal-pending"
+   once it can guarantee the IntersectionObserver will reveal them again,
+   so nothing is ever stuck hidden without JS or with reduced motion. */
+.reveal-target.reveal-pending {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+.reveal-target.reveal-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
+}
