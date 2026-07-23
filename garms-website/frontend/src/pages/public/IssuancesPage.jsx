@@ -43,7 +43,6 @@ export default function IssuancesPage() {
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="breadcrumb"><Link to="/">Home</Link> › Issuances</div>
           <h1>Issuances</h1>
           <p>DepEd orders, procurement postings, and school memoranda</p>
         </div>
