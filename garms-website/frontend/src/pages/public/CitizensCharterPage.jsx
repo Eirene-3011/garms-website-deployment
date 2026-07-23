@@ -19,7 +19,6 @@ export default function CitizensCharterPage() {
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="breadcrumb"><Link to="/">Home</Link> › <Link to="/about">About Us</Link> › Citizen's Charter</div>
           <div className="page-header-icon"><IconScroll size={26} /></div>
           <h1>Citizen's Charter</h1>
           <p>Our commitment to efficient, transparent, and accountable public service</p>
