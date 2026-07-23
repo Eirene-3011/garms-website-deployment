@@ -43,7 +43,6 @@ export default function LearningResourcesPage() {
     <div>
       <div className="page-header">
         <div className="container">
-          <div className="breadcrumb"><Link to="/">Home</Link> › Learning Resources</div>
           <h1>Learning Resources</h1>
           <p>ARAL program materials, Key Stage resources, and supplementary learning materials</p>
         </div>
