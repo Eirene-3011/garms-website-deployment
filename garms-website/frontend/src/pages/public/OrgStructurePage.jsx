@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
-import { IconLayers } from '../../components/Icons';
+import { IconLayers, IconUser } from '../../components/Icons';
 
 const PLACEHOLDER_AVATAR = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="%23e5e7eb"/><circle cx="40" cy="30" r="16" fill="%239ca3af"/><ellipse cx="40" cy="62" rx="24" ry="16" fill="%239ca3af"/></svg>';
 
@@ -11,17 +11,44 @@ const GRADE_LEVELS = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Gra
 export default function OrgStructurePage() {
   const [orgChart, setOrgChart] = useState(null);
   const [staff, setStaff] = useState([]);
+  const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     Promise.all([
       api.get('/org-chart'),
       api.get('/staff'),
-    ]).then(([o, s]) => {
+      api.get('/school-info'),
+    ]).then(([o, s, i]) => {
       setOrgChart(o.data);
       setStaff(s.data);
+      setInfo(i.data);
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
+
+  // Close profile modal on Escape, lock background scroll while open
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Escape') setSelected(null);
+  }, []);
+
+  useEffect(() => {
+    if (selected) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [selected, handleKeyDown]);
+
+  const handleCardKeyDown = (e, m) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setSelected(m);
+    }
+  };
 
   // Group staff by department_grade_level
   const grouped = GRADE_LEVELS.reduce((acc, gl) => {
@@ -47,6 +74,43 @@ export default function OrgStructurePage() {
 
       <section className="section">
         <div className="container">
+          {/* School Head / Principal spotlight */}
+          {loading ? (
+            <div className="skeleton" style={{ width: '100%', height: 120, borderRadius: 16, marginBottom: 40 }} />
+          ) : info?.principal_name && (
+            <div
+              className="card"
+              style={{
+                marginBottom: 48,
+                padding: '32px 28px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 24,
+                flexWrap: 'wrap',
+                border: 'none',
+                background: 'linear-gradient(120deg, var(--red-dark), var(--red-primary))',
+              }}
+            >
+              <div
+                aria-hidden="true"
+                style={{
+                  width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
+                  background: 'rgba(255,255,255,0.16)', border: '2px solid rgba(255,255,255,0.35)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                }}
+              >
+                <IconUser size={40} />
+              </div>
+              <div>
+                <span className="section-eyebrow section-eyebrow-invert" style={{ marginBottom: 6 }}>
+                  School Head
+                </span>
+                <h3 style={{ color: '#fff', fontSize: '1.3rem', margin: '0 0 2px' }}>{info.principal_name}</h3>
+                <p style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '0.9rem' }}>{info.principal_title}</p>
+              </div>
+            </div>
+          )}
+
           {/* Org Chart */}
           <h2 style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--gray-900)', marginBottom: 20 }}>Org Chart</h2>
           {loading ? (
@@ -71,16 +135,16 @@ export default function OrgStructurePage() {
             Faculty &amp; Staff Directory
           </h2>
           <p style={{ color: 'var(--gray-500)', fontSize: '0.88rem', marginBottom: 28 }}>
-            Teaching and non-teaching personnel of GARMS, grouped by grade level.
+            Teaching and non-teaching personnel of GARMS, grouped by grade level. Click a profile to view more.
           </p>
 
           {loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 20 }}>
+            <div className="staff-grid">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="card" style={{ padding: 16, textAlign: 'center' }}>
-                  <div className="skeleton" style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 10px' }} />
-                  <div className="skeleton" style={{ width: '70%', height: 12, margin: '0 auto 6px' }} />
-                  <div className="skeleton" style={{ width: '50%', height: 10, margin: '0 auto' }} />
+                <div key={i} className="card official-card">
+                  <div className="skeleton" style={{ width: 112, height: 112, borderRadius: '50%', margin: '0 auto 16px' }} />
+                  <div className="skeleton" style={{ width: '80%', height: 10, margin: '0 auto 8px' }} />
+                  <div className="skeleton" style={{ width: '60%', height: 9, margin: '0 auto' }} />
                 </div>
               ))}
             </div>
@@ -100,26 +164,35 @@ export default function OrgStructurePage() {
                       ({members.length} {members.length === 1 ? 'member' : 'members'})
                     </span>
                   </h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16 }}>
+                  <div className="staff-grid">
                     {members.map(m => (
-                      <div key={m.id} style={{
-                        background: '#fff', border: '1px solid var(--gray-200)',
-                        borderRadius: 10, padding: '16px 12px',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center',
-                        gap: 8, textAlign: 'center',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.05)'
-                      }}>
-                        <img
-                          src={m.photo_url ? getImageUrl(m.photo_url) : PLACEHOLDER_AVATAR}
-                          alt={m.full_name}
-                          style={{ width: 68, height: 68, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--gray-200)' }}
-                          onError={e => { e.target.src = PLACEHOLDER_AVATAR; }}
-                        />
-                        <div>
-                          <p style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--gray-900)', margin: 0, lineHeight: 1.3 }}>{m.full_name}</p>
-                          {m.position_subject && <p style={{ fontSize: '0.72rem', color: 'var(--gray-500)', margin: '3px 0 0' }}>{m.position_subject}</p>}
-                          {m.section_name && <p style={{ fontSize: '0.7rem', color: 'var(--gray-400)', margin: '2px 0 0' }}>{m.section_name}</p>}
+                      <div
+                        key={m.id}
+                        className="card official-card official-card-clickable"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`View profile for ${m.full_name}`}
+                        onClick={() => setSelected(m)}
+                        onKeyDown={(e) => handleCardKeyDown(e, m)}
+                      >
+                        <div className="official-photo-wrap">
+                          {m.photo_url ? (
+                            <img
+                              src={getImageUrl(m.photo_url)}
+                              alt={m.full_name}
+                              className="avatar-photo avatar-photo-lg"
+                              onError={e => { e.target.src = PLACEHOLDER_AVATAR; }}
+                            />
+                          ) : (
+                            <div className="avatar-placeholder avatar-placeholder-accent avatar-placeholder-lg" aria-hidden="true">
+                              <IconUser size={40} />
+                            </div>
+                          )}
+                          <span className="official-photo-hint">View profile</span>
                         </div>
+                        <p className="official-name">{m.full_name}</p>
+                        {m.position_subject && <p className="official-position">{m.position_subject}</p>}
+                        {m.section_name && <p className="official-office">{m.section_name}</p>}
                       </div>
                     ))}
                   </div>
@@ -129,6 +202,62 @@ export default function OrgStructurePage() {
           )}
         </div>
       </section>
+
+      {/* Profile modal */}
+      {selected && (
+        <div className="staff-modal-overlay" onClick={() => setSelected(null)} role="presentation">
+          <div
+            className="staff-modal card"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${selected.full_name} profile`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="staff-modal-close" onClick={() => setSelected(null)} aria-label="Close profile">
+              &times;
+            </button>
+
+            <div className="staff-modal-photo-wrap">
+              {selected.photo_url ? (
+                <img
+                  src={getImageUrl(selected.photo_url)}
+                  alt={selected.full_name}
+                  className="avatar-photo staff-modal-photo"
+                  onError={e => { e.target.src = PLACEHOLDER_AVATAR; }}
+                />
+              ) : (
+                <div className="avatar-placeholder avatar-placeholder-accent staff-modal-photo" aria-hidden="true">
+                  <IconUser size={56} />
+                </div>
+              )}
+            </div>
+
+            <h3 className="staff-modal-name">{selected.full_name}</h3>
+            <p className="staff-modal-position">{selected.position_subject || '—'}</p>
+
+            <div className="staff-modal-meta">
+              {selected.section_name && (
+                <div className="staff-modal-meta-item">
+                  <span className="staff-modal-meta-label">Section</span>
+                  <span className="staff-modal-meta-value">{selected.section_name}</span>
+                </div>
+              )}
+              {selected.department_grade_level && (
+                <div className="staff-modal-meta-item">
+                  <span className="staff-modal-meta-label">Grade Level</span>
+                  <span className="badge badge-red">{selected.department_grade_level}</span>
+                </div>
+              )}
+              {!!selected.years_in_service && (
+                <div className="staff-modal-meta-item">
+                  <span className="staff-modal-meta-label">Years in Service</span>
+                  <span className="staff-modal-meta-value">{selected.years_in_service}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
