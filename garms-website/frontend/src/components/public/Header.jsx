@@ -7,8 +7,8 @@ import './Header.css';
 
 // Custom SVG Icons
 const ChevronDownIcon = (p) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="icon" {...p}>
-    <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <polyline points="6 9 12 15 18 9" />
   </svg>
 );
 
@@ -24,7 +24,65 @@ const SparkleIcon = (p) => (
   </svg>
 );
 
-// Faculty & Staff removed from navbar (now lives inside Organizational Structure page)
+const NavItem = ({ item, location, onLinkClick }) => {
+  const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+  const [isOpen, setIsOpen] = useState(false);
+  const timeoutRef = useRef(null);
+
+  const handleEnter = () => {
+    if (item.children) {
+      clearTimeout(timeoutRef.current);
+      setIsOpen(true);
+    }
+  };
+
+  const handleLeave = () => {
+    if (item.children) {
+      timeoutRef.current = setTimeout(() => setIsOpen(false), 150);
+    }
+  };
+
+  return (
+    <div
+      className="nav-item"
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+    >
+      <Link
+        to={item.path}
+        className={`nav-link${isActive ? ' active' : ''}`}
+        onClick={() => { if (!item.children) onLinkClick(); }}
+        aria-haspopup={item.children ? "true" : "false"}
+        aria-expanded={item.children && isOpen ? "true" : "false"}
+      >
+        <span className="nav-link-text">{item.label}</span>
+        {item.children && <ChevronDownIcon className="nav-caret" />}
+      </Link>
+      {item.children && (
+        <div className={`nav-dropdown${isOpen ? ' visible' : ''}`}
+          onMouseEnter={handleEnter}
+          onMouseLeave={handleLeave}
+        >
+          <div className="dropdown-content">
+            {item.children.map((child, idx) => (
+              <Link
+                key={child.label}
+                to={child.path}
+                className={`dropdown-item${idx === 0 ? ' first' : ''}`}
+                onClick={() => { setIsOpen(false); onLinkClick(); }}
+              >
+                <span className="dropdown-dot" />
+                <span className="dropdown-label">{child.label}</span>
+                <ArrowRightIcon className="dropdown-arrow" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const NAV_ITEMS = [
   { label: 'Home', path: '/' },
   {
@@ -74,10 +132,10 @@ export default function Header() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [mobileDropdown, setMobileDropdown] = useState(null);
   const dropdownRef = useRef(null);
 
-  // Single general banner — no slideshow/carousel, just the one "general" banner
+  // Single general banner
   const [banner, setBanner] = useState(null);
   const [bannerLoading, setBannerLoading] = useState(true);
 
@@ -100,13 +158,13 @@ export default function Header() {
 
   useEffect(() => {
     setMenuOpen(false);
-    setActiveDropdown(null);
+    setMobileDropdown(null);
   }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setActiveDropdown(null);
+        setMobileDropdown(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -114,10 +172,12 @@ export default function Header() {
   }, []);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
+  const toggleMobileDropdown = (label) =>
+    setMobileDropdown((prev) => (prev === label ? null : label));
 
   return (
     <>
-      {/* Hero banner — single general banner, full width, no slideshow */}
+      {/* Hero banner — single general banner, full width */}
       <div className="header-hero">
         {bannerLoading ? (
           <div className="hero-banner-skeleton" aria-hidden="true" />
@@ -143,20 +203,30 @@ export default function Header() {
               <div className="hero-text-block">
                 {banner.title && (
                   <span className="hero-eyebrow">
-                    <SparkleIcon className="hero-eyebrow-icon" />{banner.title}
+                    <SparkleIcon className="hero-eyebrow-icon" />
+                    {banner.title}
                   </span>
                 )}
-                <h1 className="hero-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
-                <p className="hero-subtitle">{info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}</p>
+                <h1 className="hero-title">
+                  {info?.school_name || 'General Artemio Ricarte Memorial School'}
+                </h1>
+                <p className="hero-subtitle">
+                  {info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}
+                </p>
                 <div className="hero-actions">
-                  <Link to="/admissions" className="btn btn-primary btn-lg">Enroll Now<ArrowRightIcon className="btn-icon" /></Link>
-                  <Link to="/about" className="btn btn-outline-light btn-lg">Learn More</Link>
+                  <Link to="/admissions" className="btn btn-primary btn-lg">
+                    Enroll Now
+                    <ArrowRightIcon className="btn-icon" />
+                  </Link>
+                  <Link to="/about" className="btn btn-outline-light btn-lg">
+                    Learn More
+                  </Link>
                 </div>
               </div>
             </div>
           </div>
         ) : (
-          /* Fallback when no general banner is set — gradient hero with school info */
+          /* Fallback when no general banner is set */
           <div className="hero-banner-fallback" aria-hidden="true">
             <div className="hero-fallback-pattern" />
             <div className="hero-overlay-content container">
@@ -169,12 +239,24 @@ export default function Header() {
                 />
               )}
               <div className="hero-text-block">
-                <span className="hero-eyebrow"><SparkleIcon className="hero-eyebrow-icon" />Welcome to GARMS</span>
-                <h1 className="hero-title">{info?.school_name || 'General Artemio Ricarte Memorial School'}</h1>
-                <p className="hero-subtitle">{info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}</p>
+                <span className="hero-eyebrow">
+                  <SparkleIcon className="hero-eyebrow-icon" />
+                  Welcome to GARMS
+                </span>
+                <h1 className="hero-title">
+                  {info?.school_name || 'General Artemio Ricarte Memorial School'}
+                </h1>
+                <p className="hero-subtitle">
+                  {info?.motto || 'Empowering Artemians with Quality, Excellence, Service, and Resilience'}
+                </p>
                 <div className="hero-actions">
-                  <Link to="/admissions" className="btn btn-primary btn-lg">Enroll Now<ArrowRightIcon className="btn-icon" /></Link>
-                  <Link to="/about" className="btn btn-outline-light btn-lg">Learn More</Link>
+                  <Link to="/admissions" className="btn btn-primary btn-lg">
+                    Enroll Now
+                    <ArrowRightIcon className="btn-icon" />
+                  </Link>
+                  <Link to="/about" className="btn btn-outline-light btn-lg">
+                    Learn More
+                  </Link>
                 </div>
               </div>
             </div>
@@ -187,40 +269,75 @@ export default function Header() {
         <div className="container nav-inner">
           <div className={`nav-menu${menuOpen ? ' open' : ''}`}>
             {NAV_ITEMS.map((item) => (
-              <div key={item.label} className="nav-item"
-                onMouseEnter={() => item.children && setActiveDropdown(item.label)}
-                onMouseLeave={() => item.children && setActiveDropdown(null)}>
-                <Link to={item.path}
-                  className={`nav-link${location.pathname === item.path || location.pathname.startsWith(item.path + '/') ? ' active' : ''}`}
-                  onClick={() => item.children ? null : toggleMenu()}
-                  aria-haspopup={item.children ? "true" : "false"}
-                  aria-expanded={item.children && activeDropdown === item.label ? "true" : "false"}>
-                  {item.label}
-                  {item.children && <ChevronDownIcon className="nav-caret" />}
-                </Link>
-                {item.children && activeDropdown === item.label && (
-                  <div className="nav-dropdown">
-                    {item.children.map(child => (
-                      <Link key={child.label} to={child.path} className="dropdown-item" onClick={() => { setActiveDropdown(null); toggleMenu(); }}>
-                        {child.label}
-                      </Link>
-                    ))}
+              item.children ? (
+                <div
+                  key={item.label}
+                  className="nav-item mobile-parent"
+                >
+                  <button
+                    className={`nav-link mobile-trigger${
+                      location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+                        ? ' active'
+                        : ''
+                    }`}
+                    onClick={() => toggleMobileDropdown(item.label)}
+                    aria-haspopup="true"
+                    aria-expanded={mobileDropdown === item.label ? "true" : "false"}
+                  >
+                    <span className="nav-link-text">{item.label}</span>
+                    <ChevronDownIcon className={`nav-caret${mobileDropdown === item.label ? ' open' : ''}`} />
+                  </button>
+                  <div className={`nav-dropdown${mobileDropdown === item.label ? ' visible' : ''}`}>
+                    <div className="dropdown-content">
+                      {item.children.map((child, idx) => (
+                        <Link
+                          key={child.label}
+                          to={child.path}
+                          className={`dropdown-item${idx === 0 ? ' first' : ''}`}
+                          onClick={toggleMenu}
+                        >
+                          <span className="dropdown-dot" />
+                          <span className="dropdown-label">{child.label}</span>
+                          <ArrowRightIcon className="dropdown-arrow" />
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div key={item.label} className="nav-item">
+                  <Link
+                    to={item.path}
+                    className={`nav-link${
+                      location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+                        ? ' active'
+                        : ''
+                    }`}
+                    onClick={toggleMenu}
+                  >
+                    <span className="nav-link-text">{item.label}</span>
+                  </Link>
+                </div>
+              )
             ))}
           </div>
 
           <div className="nav-actions">
-            <button className={`hamburger${menuOpen ? ' open' : ''}`} onClick={toggleMenu} aria-label="Toggle navigation menu">
-              <span></span><span></span><span></span>
+            <button
+              className={`hamburger${menuOpen ? ' open' : ''}`}
+              onClick={toggleMenu}
+              aria-label="Toggle navigation menu"
+            >
+              <span />
+              <span />
+              <span />
             </button>
           </div>
         </div>
       </nav>
 
       {/* Mobile Menu Overlay */}
-      {menuOpen && <div className="mobile-menu-overlay" onClick={toggleMenu}></div>}
+      {menuOpen && <div className="mobile-menu-overlay" onClick={toggleMenu} />}
     </>
   );
 }
