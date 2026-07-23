@@ -259,19 +259,28 @@ function CSSBarChart({ data, animate }) {
         {data.map((d, i) => {
           const secH = (d.sections / maxVal) * 100;
           const clsH = (d.classrooms / maxVal) * 100;
+          // Always render actual height; use transition delay for animation
           return (
             <div key={i} className="bar-group">
               <div className="bar-pair">
                 <div
                   className="bar bar-sections"
-                  style={{ height: animate ? `${secH}%` : '0%' }}
+                  style={{
+                    height: `${secH}%`,
+                    transition: `height 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${i * 0.1 + 0.3}s`,
+                    minHeight: secH > 0 ? '4px' : '0',
+                  }}
                   title={`Sections: ${d.sections}`}
                 >
                   <span className="bar-value">{d.sections}</span>
                 </div>
                 <div
                   className="bar bar-classrooms"
-                  style={{ height: animate ? `${clsH}%` : '0%' }}
+                  style={{
+                    height: `${clsH}%`,
+                    transition: `height 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${i * 0.1 + 0.45}s`,
+                    minHeight: clsH > 0 ? '4px' : '0',
+                  }}
                   title={`Classrooms: ${d.classrooms}`}
                 >
                   <span className="bar-value">{d.classrooms}</span>
