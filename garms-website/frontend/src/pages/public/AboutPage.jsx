@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { getImageUrl } from '../../utils/helpers';
@@ -19,15 +19,16 @@ import {
   IconUser,
 } from '../../components/Icons';
 
+// Ordered as a narrative: where the school came from, who it is today,
+// then the community it serves — instead of an arbitrary list.
 const SECTIONS = [
+  { key: 'history', label: 'School History', Icon: IconClock },
+  { key: 'historical_development', label: 'Historical Development of GARMS', Icon: IconLayers },
+  { key: 'chronology_of_school_heads', label: 'Chronology of School Heads', Icon: IconUser },
   { key: 'vision', label: 'Vision', Icon: IconCompass },
   { key: 'mission', label: 'Mission', Icon: IconTarget },
   { key: 'core_values', label: 'Core Values', Icon: IconGem },
   { key: 'goals', label: 'Goals & Objectives', Icon: IconFlag },
-  { key: 'history', label: 'School History', Icon: IconClock },
-  // New editable sections
-  { key: 'chronology_of_school_heads', label: 'Chronology of School Heads', Icon: IconUser },
-  { key: 'historical_development', label: 'Historical Development of GARMS', Icon: IconClock },
   { key: 'community_profile', label: 'Community Profile', Icon: IconUsers },
   { key: 'demographics', label: 'Demographics', Icon: IconBuilding },
 ];
@@ -42,7 +43,9 @@ export default function AboutPage() {
   const [content, setContent] = useState({});
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState(SECTIONS[0].key);
   const revealScope = useRef(null);
+  const sectionRefs = useRef({});
 
   useEffect(() => {
     Promise.all([
@@ -87,6 +90,32 @@ export default function AboutPage() {
     return () => io.disconnect();
   }, [loading]);
 
+  // Scroll-spy: highlights the current section in the table of contents.
+  useEffect(() => {
+    if (loading) return;
+
+    const els = SECTIONS
+      .map(sec => sectionRefs.current[sec.key])
+      .filter(Boolean);
+    if (!els.length) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) setActiveSection(entry.target.id);
+        });
+      },
+      { threshold: 0, rootMargin: '-15% 0px -70% 0px' }
+    );
+
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, [loading]);
+
+  const registerSectionRef = useCallback((key) => (el) => {
+    if (el) sectionRefs.current[key] = el;
+  }, []);
+
   const infoRows = info ? [
     { label: 'School Name', val: info.school_name, Icon: IconBuilding },
     { label: 'School ID', val: info.school_id_no, mono: true, Icon: IconHash },
@@ -106,7 +135,6 @@ export default function AboutPage() {
         <div className="container">
           <div className="breadcrumb"><Link to="/">Home</Link> › About Us</div>
           <h1>About GARMS</h1>
-          {/* No subtitle here per design revision */}
         </div>
       </div>
 
@@ -155,24 +183,13 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Identity pillars + School Profile sections */}
+      {/* School Profile: sidebar table of contents + section cards */}
       <section className="section">
         <div className="container">
           <h2 className="section-title">School Profile</h2>
           <p className="section-subtitle">
-            The pillars and history that define General Artemio Ricarte Memorial School.
+            The story, identity, and community that define General Artemio Ricarte Memorial School.
           </p>
-
-          {!loading && (
-            <nav className="pillar-nav" aria-label="Jump to section">
-              {SECTIONS.map(sec => (
-                <a key={sec.key} href={`#${sec.key}`} className="pillar-nav-link">
-                  <sec.Icon size={16} />
-                  <span>{sec.label}</span>
-                </a>
-              ))}
-            </nav>
-          )}
 
           {loading ? (
             <div style={{ maxWidth: 720 }}>
@@ -184,32 +201,46 @@ export default function AboutPage() {
               ))}
             </div>
           ) : (
-            <div className="timeline">
-              {SECTIONS.map((sec, i) => (
-                <div
-                  key={sec.key}
-                  id={sec.key}
-                  className="timeline-item reveal-target"
-                  style={{ transitionDelay: `${(i % 4) * 60}ms` }}
-                >
-                  <div className="timeline-node" aria-hidden="true">
-                    <sec.Icon size={22} />
-                  </div>
-                  <div className="timeline-content">
-                    <h2 className="timeline-title">{sec.label}</h2>
-                    <div
-                      className="rich-content card"
-                      style={{ padding: '24px 28px' }}
-                    >
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html: content[sec.key]?.body_richtext || '<p><em>Content coming soon.</em></p>',
-                        }}
-                      />
+            <div className="about-layout">
+              <aside className="about-toc" aria-label="Section navigation">
+                <p className="about-toc-title">On this page</p>
+                <ul className="about-toc-list">
+                  {SECTIONS.map(sec => (
+                    <li key={sec.key}>
+                      <a
+                        href={`#${sec.key}`}
+                        className={`about-toc-link${activeSection === sec.key ? ' about-toc-link-active' : ''}`}
+                      >
+                        <sec.Icon size={15} />
+                        <span>{sec.label}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </aside>
+
+              <div className="about-sections">
+                {SECTIONS.map((sec, i) => (
+                  <div
+                    key={sec.key}
+                    id={sec.key}
+                    ref={registerSectionRef(sec.key)}
+                    className="about-section card reveal-target"
+                    style={{ transitionDelay: `${(i % 4) * 60}ms` }}
+                  >
+                    <div className="about-section-header">
+                      <span className="about-section-icon"><sec.Icon size={18} /></span>
+                      <h2 className="about-section-title">{sec.label}</h2>
                     </div>
+                    <div
+                      className="rich-content"
+                      dangerouslySetInnerHTML={{
+                        __html: content[sec.key]?.body_richtext || '<p><em>Content coming soon.</em></p>',
+                      }}
+                    />
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 
