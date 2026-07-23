@@ -1,7 +1,7 @@
 /* ================================================================
    GARMS HomePage — Premium Modern Styles
    Theme: Red/Gold/Cream palette | Font: Inter
-   ENHANCED: Charts, hero overlay, summary strip, improved sections
+   ENHANCED: Pure CSS bar charts + SVG donut charts, no external deps
    ================================================================ */
 
 :root {
@@ -728,7 +728,7 @@ html, body {
 }
 
 /* ================================================================
-   Dashboard Summary Strip — NEW
+   Dashboard Summary Strip
    ================================================================ */
 .dash-summary-strip {
   display: grid;
@@ -801,7 +801,7 @@ html, body {
 }
 
 /* ================================================================
-   Charts Section — NEW
+   Charts Section — Pure CSS Bar Chart + SVG Donut
    ================================================================ */
 .charts-section {
   margin-top: 48px;
@@ -955,7 +955,149 @@ html, body {
   font-weight: 500;
 }
 
-/* Personnel badges below pie chart */
+/* ─── CSS Bar Chart ──────────────────────────────────────────── */
+.css-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  height: 280px;
+  padding: 20px 0 0;
+  position: relative;
+}
+
+.chart-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding-right: 12px;
+  flex-shrink: 0;
+}
+
+.y-axis-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-align: right;
+  line-height: 1;
+}
+
+.chart-grid-lines {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-top: 20px;
+  pointer-events: none;
+}
+
+.grid-line {
+  width: 100%;
+  height: 1px;
+  background: var(--gray-100);
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  flex: 1;
+  height: 100%;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 80px;
+}
+
+.bar-pair {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 100%;
+}
+
+.bar {
+  width: 28px;
+  border-radius: 6px 6px 0 0;
+  transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  cursor: pointer;
+  min-height: 0;
+}
+
+.bar:hover {
+  filter: brightness(1.08);
+}
+
+.bar-sections {
+  background: linear-gradient(180deg, #e8445a 0%, #c41e3a 100%);
+  box-shadow: 0 -2px 8px rgba(196, 30, 58, 0.15);
+}
+
+.bar-classrooms {
+  background: linear-gradient(180deg, #e7bd63 0%, #c99a3b 100%);
+  box-shadow: 0 -2px 8px rgba(201, 154, 59, 0.15);
+}
+
+.bar-value {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--gray-600);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.bar:hover .bar-value {
+  opacity: 1;
+}
+
+.bar-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gray-600);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ─── SVG Donut Chart ─────────────────────────────────────── */
+.donut-chart {
+  display: block;
+}
+
+.donut-segment {
+  opacity: 0;
+  animation: donut-fade-in 0.6s ease forwards;
+}
+
+.donut-segment:nth-child(2) { animation-delay: 0.2s; }
+.donut-segment:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes donut-fade-in {
+  from { opacity: 0; stroke-dashoffset: 1000; }
+  to { opacity: 1; }
+}
+
+.donut-center-num {
+  font-family: var(--font-sans);
+}
+
+.donut-center-label {
+  font-family: var(--font-sans);
+}
+
+/* Personnel badges below donut */
 .personnel-badges {
   display: flex;
   gap: 12px;
@@ -1000,31 +1142,8 @@ html, body {
   margin-left: 4px;
 }
 
-/* Chart tooltip */
-.chart-tooltip {
-  background: var(--white);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  box-shadow: var(--shadow-md);
-  pointer-events: none;
-}
-
-.chart-tooltip-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--gray-900);
-  margin-bottom: 4px;
-}
-
-.chart-tooltip-value {
-  font-size: 0.78rem;
-  font-weight: 600;
-  margin: 0;
-}
-
 /* ================================================================
-   Grade Table (kept for reference but below charts now)
+   Grade Table (kept below charts)
    ================================================================ */
 .grade-table-card {
   background: var(--white);
@@ -1256,7 +1375,6 @@ html, body {
 .ppa-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
 .ppa-card:hover .ppa-image { transform: scale(1.08); }
 
-/* Subtle image overlay on hover */
 .ppa-image-overlay {
   position: absolute;
   inset: 0;
@@ -1268,7 +1386,6 @@ html, body {
 
 .ppa-card:hover .ppa-image-overlay { opacity: 1; }
 
-/* Shine sweep */
 .ppa-shine {
   position: absolute;
   top: 0;
@@ -1317,7 +1434,6 @@ html, body {
   background-size: 24px 24px; pointer-events: none;
 }
 
-/* Ambient floating orbs for wow factor */
 .cta-glow-orb {
   position: absolute;
   border-radius: 50%;
@@ -1418,6 +1534,8 @@ html, body {
   .section-header-inner { gap: 8px; }
   .chart-card { padding: 20px 18px; }
   .personnel-badges { flex-direction: column; align-items: center; }
+  .css-bar-chart { height: 220px; }
+  .bar { width: 22px; }
 }
 
 /* ================================================================
@@ -1441,6 +1559,7 @@ html, body {
   .section-subtitle { font-size: 0.92rem; }
   .charts-grid { gap: 16px; }
   .dash-summary-strip { gap: 12px; }
+  .bar { width: 18px; }
 }
 
 /* ================================================================
@@ -1454,4 +1573,6 @@ html, body {
   }
   .hero-slide, .hero-slide-img { transition: none; }
   .cta-glow-orb { animation: none; }
+  .bar { transition: none; }
+  .donut-segment { animation: none; opacity: 1; }
 }
