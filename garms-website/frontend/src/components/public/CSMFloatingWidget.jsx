@@ -4,7 +4,7 @@ import { getImageUrl } from '../../utils/helpers';
 
 /**
  * CSMFloatingWidget — floating Client Satisfaction Survey button on the homepage.
- * - Appears automatically on first load; dismisses for the session when closed (✕).
+ * - Appears automatically on first load; dismisses for the session when closed (X).
  * - Minimize collapses it back to the small button without full dismissal.
  * - Reappears on a new session (sessionStorage, not localStorage).
  * - Shows a QR code for the survey link:
@@ -13,24 +13,22 @@ import { getImageUrl } from '../../utils/helpers';
  */
 export default function CSMFloatingWidget() {
   const [csmLink, setCsmLink] = useState(null);
-  const [qrImage, setQrImage] = useState(null); // manually uploaded override (optional)
+  const [qrImage, setQrImage] = useState(null);
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Check if dismissed this session
     if (sessionStorage.getItem('csm_dismissed') === '1') {
       setDismissed(true);
       return;
     }
-    // Load CSM link and optional QR image override from feedback_links
-    api.get('/feedback').then(r => {
+    api.get('/feedback').then(function (r) {
       const links = Array.isArray(r.data) ? r.data : [];
-      const csm = links.find(l => l.type === 'csm_survey');
-      const qr = links.find(l => l.type === 'qr_code_image');
+      const csm = links.find(function (l) { return l.type === 'csm_survey'; });
+      const qr = links.find(function (l) { return l.type === 'qr_code_image'; });
       if (csm) setCsmLink(csm.url);
       if (qr) setQrImage(qr.url);
-    }).catch(() => {});
+    }).catch(function () {});
   }, []);
 
   const handleDismiss = () => {
@@ -39,22 +37,20 @@ export default function CSMFloatingWidget() {
     setExpanded(false);
   };
 
-  // Don't render if dismissed this session or if there's no CSM link
-  if (dismissed || !csmLink) return null;
+  if (dismissed || !csmLink) {
+    return null;
+  }
 
-  // Prefer a manually uploaded QR image if the admin set one.
-  // Otherwise auto-generate a QR code straight from the CSM survey URL.
   const qrSrc = qrImage
     ? getImageUrl(qrImage)
-    : `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(csmLink)}`;
+    : 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=' + encodeURIComponent(csmLink);
 
   return (
     <div className="csm-widget" role="complementary" aria-label="Client Satisfaction Survey">
       {expanded ? (
         <div className="csm-panel">
-          {/* Header */}
           <div className="csm-panel-header">
-            <span className="csm-panel-title">📋 Client Satisfaction Survey</span>
+            <span className="csm-panel-title">Client Satisfaction Survey</span>
             <div style={{ display: 'flex', gap: 4 }}>
               <button
                 className="csm-icon-btn"
@@ -78,7 +74,7 @@ export default function CSMFloatingWidget() {
               </button>
             </div>
           </div>
-          {/* Body */}
+
           <div className="csm-panel-body">
             <p className="csm-desc">Scan the QR code or tap below to answer our Client Satisfaction Survey.</p>
             <img
@@ -86,15 +82,10 @@ export default function CSMFloatingWidget() {
               alt="Scan to take the Client Satisfaction Survey"
               className="csm-qr"
               loading="lazy"
-              onError={e => { e.target.style.display = 'none'; }}
+              onError={(e) => { e.target.style.display = 'none'; }}
             />
-            
-              href={csmLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="csm-link-btn"
-            >
-              Take the Survey →
+            <a href={csmLink} target="_blank" rel="noopener noreferrer" className="csm-link-btn">
+              Take the Survey
             </a>
           </div>
         </div>
@@ -106,7 +97,7 @@ export default function CSMFloatingWidget() {
           title="Client Satisfaction Survey"
         >
           <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
-            <path d="M14 2H6C4.9 2 4 2.9 4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-3 7H7v-2h3v2zm7 0h-5v-2h5v2zm0-4H7v-2h10v2z"/>
+            <path d="M14 2H6C4.9 2 4 2.9 4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-3 7H7v-2h3v2zm7 0h-5v-2h5v2zm0-4H7v-2h10v2z" />
           </svg>
           <span className="csm-fab-label">CSM</span>
         </button>
@@ -121,7 +112,6 @@ export default function CSMFloatingWidget() {
           font-family: 'Poppins', sans-serif;
         }
 
-        /* Floating button (collapsed state) */
         .csm-fab {
           display: flex;
           flex-direction: column;
@@ -146,7 +136,6 @@ export default function CSMFloatingWidget() {
           letter-spacing: 0.06em;
         }
 
-        /* Expanded panel */
         .csm-panel {
           background: #fff;
           border-radius: 14px;
