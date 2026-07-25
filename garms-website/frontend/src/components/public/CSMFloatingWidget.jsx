@@ -7,10 +7,13 @@ import { getImageUrl } from '../../utils/helpers';
  * - Appears automatically on first load; dismisses for the session when closed (✕).
  * - Minimize collapses it back to the small button without full dismissal.
  * - Reappears on a new session (sessionStorage, not localStorage).
+ * - Shows a QR code for the survey link:
+ *     1) uses an admin-uploaded qr_code_image if one exists, otherwise
+ *     2) auto-generates a QR code from the csmLink URL itself.
  */
 export default function CSMFloatingWidget() {
   const [csmLink, setCsmLink] = useState(null);
-  const [qrImage, setQrImage] = useState(null);
+  const [qrImage, setQrImage] = useState(null); // manually uploaded override (optional)
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -20,7 +23,7 @@ export default function CSMFloatingWidget() {
       setDismissed(true);
       return;
     }
-    // Load CSM link and optional QR image from feedback_links
+    // Load CSM link and optional QR image override from feedback_links
     api.get('/feedback').then(r => {
       const links = Array.isArray(r.data) ? r.data : [];
       const csm = links.find(l => l.type === 'csm_survey');
@@ -38,6 +41,12 @@ export default function CSMFloatingWidget() {
 
   // Don't render if dismissed this session or if there's no CSM link
   if (dismissed || !csmLink) return null;
+
+  // Prefer a manually uploaded QR image if the admin set one.
+  // Otherwise auto-generate a QR code straight from the CSM survey URL.
+  const qrSrc = qrImage
+    ? getImageUrl(qrImage)
+    : `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(csmLink)}`;
 
   return (
     <div className="csm-widget" role="complementary" aria-label="Client Satisfaction Survey">
@@ -71,16 +80,15 @@ export default function CSMFloatingWidget() {
           </div>
           {/* Body */}
           <div className="csm-panel-body">
-            <p className="csm-desc">Help us improve our services by answering our Client Satisfaction Survey.</p>
-            {qrImage && (
-              <img
-                src={getImageUrl(qrImage)}
-                alt="CSM QR Code"
-                className="csm-qr"
-                onError={e => e.target.style.display = 'none'}
-              />
-            )}
-            <a
+            <p className="csm-desc">Scan the QR code or tap below to answer our Client Satisfaction Survey.</p>
+            <img
+              src={qrSrc}
+              alt="Scan to take the Client Satisfaction Survey"
+              className="csm-qr"
+              loading="lazy"
+              onError={e => { e.target.style.display = 'none'; }}
+            />
+            
               href={csmLink}
               target="_blank"
               rel="noopener noreferrer"
@@ -191,12 +199,13 @@ export default function CSMFloatingWidget() {
           line-height: 1.5;
         }
         .csm-qr {
-          width: 130px;
-          height: 130px;
+          width: 150px;
+          height: 150px;
           object-fit: contain;
           border: 1px solid #e5e7eb;
           border-radius: 8px;
           padding: 6px;
+          background: #fff;
         }
         .csm-link-btn {
           display: block;
