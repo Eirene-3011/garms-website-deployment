@@ -14,7 +14,7 @@ import { getImageUrl } from '../../utils/helpers';
 export default function CSMFloatingWidget() {
   const [csmLink, setCsmLink] = useState(null);
   const [qrImage, setQrImage] = useState(null);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
