@@ -2769,28 +2769,32 @@ input, select, textarea, button { font-size: 16px; }
   height: auto;
 }
 
-/* ---- Justified body text on narrow phones ----
-   `text-align: justify` needs a fairly wide measure to look right.
-   Once a line only fits 5-8 words (any phone ≤640px, and especially
-   the About page's .about-section cards, which have their own inner
-   padding on top of the page container), justify starts stretching
-   inter-word spacing unevenly and can leave short, orphaned words
-   dangling on their own line — exactly what shows up on the About
-   page's "School History" copy on a phone. Left-align instead once
-   the column gets this narrow; hyphens stay on to keep the ragged
-   edge tidy, but justification is what actually looks broken. */
-@media (max-width: 640px) {
-  p,
-  .rich-content p,
-  .rich-content li,
-  .note-panel p,
-  .about-section p,
-  .committee-desc,
-  .ppa-desc,
-  .student-card-desc {
-    text-align: left;
-    text-align-last: left;
-  }
+/* ---- Justified body text, including on phones ----
+   Per request, justify stays on at every width. The ragged/orphaned-word
+   look on narrow columns comes from automatic hyphenation not actually
+   firing (it silently no-ops without a `lang` attribute on <html>, and
+   without `-webkit-hyphens`/`-ms-hyphens` in some browsers) — once
+   hyphenation genuinely works, justify has room to break long words
+   across the line instead of stretching gaps between short ones.
+   NOTE: hyphens: auto requires <html lang="en"> (or your locale) to be
+   set in your page's root HTML — without it, no browser will hyphenate
+   and justify will keep looking ragged on narrow phone widths. */
+p,
+.rich-content p,
+.rich-content li,
+.note-panel p,
+.about-section p,
+.committee-desc,
+.ppa-desc,
+.student-card-desc {
+  text-align: justify;
+  text-align-last: left;
+  text-justify: inter-word;
+  -webkit-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* ---- About page: section cards on phones ----
