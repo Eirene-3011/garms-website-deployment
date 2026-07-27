@@ -142,6 +142,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
 img, picture, video, canvas, svg {
@@ -831,7 +832,7 @@ tr:hover td { background: var(--gray-50); }
 
 /* ============================================================
    Responsive breakpoints
-   Mobile-first quality floor: 375 / 640 / 768 / 1024 / 1280
+   Mobile-first quality floor: 360 / 400 / 480 / 640 / 768 / 1024 / 1280
    ============================================================ */
 
 @media (max-width: 1280px) {
@@ -856,6 +857,48 @@ tr:hover td { background: var(--gray-50); }
   .btn { padding: 10px 20px; font-size: var(--fs-sm); }
   .card-body { padding: var(--space-4); }
   .section-title::after { width: 48px; }
+}
+
+/* ---- Small-phone hardening (≤400px, e.g. iPhone SE / older Android) ----
+   Several grids below use a fixed minmax() card width (260–300px) that
+   is wider than the usable width on a 320–360px viewport once container
+   padding is subtracted, which forces unwanted horizontal scrolling.
+   This tier drops those grids to a single column and trims spacing/
+   type sizes that otherwise feel cramped at this width. */
+@media (max-width: 400px) {
+  .container, .container-narrow { padding: 0 var(--space-3); }
+
+  .section { padding: var(--space-8) 0; }
+  .section-sm { padding: var(--space-6) 0; }
+
+  .ppa-grid,
+  .staff-grid,
+  .grid-auto,
+  .info-panel { grid-template-columns: 1fr; }
+
+  .stat-grid { grid-template-columns: 1fr; }
+
+  .btn-lg { padding: 13px 24px; min-height: 48px; }
+
+  .charter-badges { gap: var(--space-2); }
+
+  .official-card-clickable { padding: var(--space-6) var(--space-4) var(--space-5); }
+  .official-photo-wrap,
+  .avatar-photo-lg,
+  .avatar-placeholder-lg { width: 92px; height: 92px; }
+
+  .staff-modal { padding: var(--space-6) var(--space-4) var(--space-5); }
+  .staff-modal-photo { width: 108px; height: 108px; }
+
+  .committee-header,
+  .contact-info-row,
+  .resource-row,
+  .issuance-row { padding: 14px 16px; }
+
+  .step-item,
+  .timeline-item { gap: var(--space-3); }
+
+  .about-section { padding: var(--space-5) var(--space-4); }
 }
 
 /* Respect safe areas on notched devices */
@@ -1954,7 +1997,7 @@ tr:hover td { background: var(--gray-50); }
   line-height: 1;
 }
 
-.event-info { flex: 1; }
+.event-info { flex: 1; min-width: 0; }
 
 .event-name { font-weight: 600; color: var(--gray-900); }
 
@@ -2216,6 +2259,8 @@ tr:hover td { background: var(--gray-50); }
   background: var(--white);
   box-shadow: var(--shadow-xl);
   animation: staff-modal-pop 0.22s var(--ease-out);
+  max-height: calc(100vh - var(--space-12));
+  overflow-y: auto;
 }
 
 @keyframes staff-modal-pop {
@@ -2301,7 +2346,8 @@ tr:hover td { background: var(--gray-50); }
 }
 
 @media (max-width: 480px) {
-  .staff-modal { padding: var(--space-8) var(--space-5) var(--space-6); }
+  .staff-modal-overlay { padding: var(--space-4); align-items: flex-end; }
+  .staff-modal { padding: var(--space-8) var(--space-5) var(--space-6); max-width: 100%; }
   .staff-modal-photo { width: 128px; height: 128px; }
 }
 
