@@ -2743,3 +2743,70 @@ input, select, textarea, button { font-size: 16px; }
   max-width: 100%;
   height: auto;
 }
+
+/* ---- Justified body text on narrow phones ----
+   `text-align: justify` needs a fairly wide measure to look right.
+   Once a line only fits 5-8 words (any phone ≤640px, and especially
+   the About page's .about-section cards, which have their own inner
+   padding on top of the page container), justify starts stretching
+   inter-word spacing unevenly and can leave short, orphaned words
+   dangling on their own line — exactly what shows up on the About
+   page's "School History" copy on a phone. Left-align instead once
+   the column gets this narrow; hyphens stay on to keep the ragged
+   edge tidy, but justification is what actually looks broken. */
+@media (max-width: 640px) {
+  p,
+  .rich-content p,
+  .rich-content li,
+  .note-panel p,
+  .about-section p,
+  .committee-desc,
+  .ppa-desc,
+  .student-card-desc {
+    text-align: left;
+    text-align-last: left;
+  }
+}
+
+/* ---- About page: section cards on phones ----
+   Tightens the card shell further and guarantees the icon + title
+   row and TOC pill row can never overflow their own card on the
+   smallest supported widths. ---- */
+@media (max-width: 480px) {
+  .about-layout { gap: var(--space-6); }
+
+  .about-section {
+    padding: var(--space-5) var(--space-4);
+    border-radius: var(--radius-md);
+  }
+
+  .about-section-header {
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+  }
+
+  .about-section-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .about-section-title { font-size: var(--fs-md); }
+
+  .about-toc-list {
+    gap: var(--space-1);
+    /* fade hint on the right edge so a scrollable pill row doesn't
+       look like it simply got cut off mid-word */
+    mask-image: linear-gradient(90deg, #000 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent 100%);
+  }
+
+  .about-toc-link {
+    padding: 7px 12px;
+    font-size: var(--fs-xs);
+  }
+
+  .facts-shell { padding: var(--space-5) var(--space-4) var(--space-3); }
+
+  .hero-monogram { display: none; }
+}
