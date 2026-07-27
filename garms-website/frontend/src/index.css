@@ -815,6 +815,31 @@ tr:hover td { background: var(--gray-50); }
 
 .rich-content img { margin: var(--space-4) auto; border-radius: var(--radius-md); }
 
+/* CMS/editor-authored content (injected via dangerouslySetInnerHTML)
+   can carry inline style="width: 600px" or a legacy width="600"
+   attribute on images, iframes, or wrapper divs. Those beat ordinary
+   external CSS, so anything landing inside .rich-content gets its
+   box-sizing and max-width forced regardless of inline sizing. */
+.rich-content,
+.rich-content * {
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.rich-content table,
+.rich-content pre {
+  max-width: 100% !important;
+}
+
+.rich-content iframe,
+.rich-content video,
+.rich-content embed,
+.rich-content object {
+  width: 100% !important;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
 /* ============================================================
    Grid & flex utilities
    ============================================================ */
