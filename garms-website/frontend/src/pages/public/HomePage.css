@@ -1277,3 +1277,110 @@ img, svg { max-width: 100%; height: auto; }
   from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
+/* ================================================================
+   FINAL RESPONSIVE SAFEGUARDS
+   Preserves the existing homepage styling while ensuring every
+   section, card, chart, control, and CTA fits mobile screens.
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, .homepage { max-width: 100%; overflow-x: hidden; }
+img, svg, video, canvas, iframe { max-width: 100%; }
+button, input, select, textarea { max-width: 100%; font: inherit; }
+.homepage, .homepage * { min-width: 0; }
+.homepage .container { width: min(calc(100% - 48px), 1200px); max-width: 100%; padding-inline: 0; }
+.homepage :where(.section-row, .hero-badge-row, .hero-panel-actions, .cta-actions, .dash-card-header, .chart-card-header) { flex-wrap: wrap; }
+.homepage :where(.kpi-card, .dash-summary-card, .chart-card, .quick-link-card, .ppa-card, .cta-text) { max-width: 100%; }
+.homepage :where(.table-wrap, .table-responsive, .chart-scroll) { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.homepage table { max-width: 100%; }
+
+@media (max-width: 1024px) {
+  .homepage .hero-content-inner { max-width: 680px; }
+  .homepage .charts-grid { grid-template-columns: 1fr; }
+  .homepage .chart-container { min-height: 300px; }
+  .homepage .dash-summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .homepage .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .homepage .quick-links-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .homepage .ppas-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .homepage .cta-text { min-width: 0; }
+}
+
+@media (max-width: 768px) {
+  :root { --nav-height: 68px; }
+  .homepage .container { width: calc(100% - 32px); }
+  .homepage .section { padding-block: clamp(52px, 9vw, 72px); }
+  .homepage .section-header { margin-bottom: 36px; }
+  .homepage .section-header-left .section-header-inner { align-items: flex-start; }
+  .homepage .section-subtitle { max-width: 100%; }
+  .homepage .hero-slideshow { height: 430px; }
+  .homepage .hero-content-inner { padding-inline: 18px; }
+  .homepage .hero-headline { font-size: clamp(1.9rem, 8.5vw, 3rem); }
+  .homepage .hero-tagline { max-width: 100%; }
+  .homepage .hero-nav { width: 44px; height: 44px; }
+  .homepage .hero-nav-prev { left: 14px; }
+  .homepage .hero-nav-next { right: 14px; }
+  .homepage .hero-controls { bottom: 18px; }
+  .homepage .hero-panel-actions { align-items: stretch; }
+  .homepage .hero-panel-actions .btn { width: 100%; }
+  .homepage .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .homepage .dash-summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .homepage .charts-grid { grid-template-columns: 1fr; }
+  .homepage .chart-container, .homepage .chart-container-pie { min-height: 270px; }
+  .homepage .quick-links-grid { grid-template-columns: 1fr; }
+  .homepage .ppas-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .homepage .ppa-image-wrap { height: 180px; }
+  .homepage .cta-section, .homepage .cta-inner { padding-block: 56px; }
+  .homepage .cta-inner { align-items: flex-start; flex-direction: column; gap: 28px; }
+  .homepage .cta-actions { width: 100%; align-items: stretch; }
+  .homepage .cta-actions .btn { width: 100%; }
+  .homepage .site-header:has(.nav-main.is-mobile-open) { position: relative; z-index: 1003; }
+  .homepage .site-header:has(.nav-main.is-mobile-open) .nav-main,
+  .homepage .site-header:has(.nav-main.is-mobile-open) .nav-link,
+  .homepage .site-header:has(.nav-main.is-mobile-open) .dropdown-item { pointer-events: auto; }
+  .homepage .mobile-backdrop { z-index: 1001; }
+}
+
+@media (max-width: 600px) {
+  .homepage .container { width: calc(100% - 30px); }
+  .homepage .section { padding-block: 48px; }
+  .homepage .section-title { font-size: clamp(1.65rem, 8vw, 2.2rem); }
+  .homepage .hero-slideshow { height: 380px; }
+  .homepage .hero-headline { font-size: clamp(1.8rem, 10vw, 2.7rem); }
+  .homepage .hero-badge-pill { font-size: .68rem; padding-inline: 12px; }
+  .homepage .hero-nav { width: 40px; height: 40px; }
+  .homepage .hero-nav-prev { left: 10px; }
+  .homepage .hero-nav-next { right: 10px; }
+  .homepage .hero-toggle { width: 38px; height: 38px; }
+  .homepage .kpi-grid, .homepage .dash-summary-strip { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .homepage .kpi-card, .homepage .dash-summary-card { padding: 16px; }
+  .homepage .charts-grid { gap: 16px; }
+  .homepage .chart-card { padding: 18px; }
+  .homepage .chart-container, .homepage .chart-container-pie { min-height: 240px; }
+  .homepage .row-label { width: 52px; font-size: .66rem; flex: 0 0 52px; }
+  .homepage .bar-track { min-width: 0; }
+  .homepage .ppas-grid { grid-template-columns: 1fr; }
+  .homepage .ppa-image-wrap { height: 190px; }
+  .homepage .cta-inner { padding-block: 44px; }
+  .homepage .cta-text p { max-width: 100%; }
+  .homepage footer > div, .homepage .site-footer > div, .homepage #site-footer > div { width: calc(100% - 30px); }
+}
+
+@media (max-width: 420px) {
+  .homepage .container { width: calc(100% - 24px); }
+  .homepage .section { padding-block: 42px; }
+  .homepage .hero-slideshow { height: 350px; }
+  .homepage .hero-content-inner { padding-inline: 12px; }
+  .homepage .hero-headline { font-size: clamp(1.7rem, 11vw, 2.35rem); }
+  .homepage .hero-tagline { font-size: .86rem; }
+  .homepage .hero-nav { width: 36px; height: 36px; }
+  .homepage .hero-controls { gap: 10px; bottom: 12px; }
+  .homepage .kpi-grid, .homepage .dash-summary-strip { grid-template-columns: 1fr 1fr; }
+  .homepage .kpi-card, .homepage .dash-summary-card { padding: 13px 11px; }
+  .homepage .kpi-value { font-size: 1.25rem; }
+  .homepage .row-label { width: 44px; flex-basis: 44px; font-size: .6rem; }
+  .homepage .chart-card { padding: 15px; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .homepage :where(.btn, .hero-nav, .hero-toggle, .quick-link-card, .ppa-card) { min-height: 44px; }
+  .homepage :where(.kpi-card, .dash-summary-card, .quick-link-card, .ppa-card):hover { transform: none; }
+}
