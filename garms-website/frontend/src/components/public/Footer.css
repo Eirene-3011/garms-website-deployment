@@ -223,3 +223,57 @@
     text-align: center;
   }
 }
+/* ============================================================
+   FOOTER MOBILE RESPONSIVE SAFEGUARDS
+   Preserves the existing footer styling while preventing
+   narrow-screen overflow and cramped content.
+   ============================================================ */
+.footer, .footer * { min-width: 0; box-sizing: border-box; }
+.footer img, .footer svg { max-width: 100%; height: auto; }
+.footer a, .footer p, .footer li, .footer h4 { overflow-wrap: anywhere; }
+.footer .container { width: min(calc(100% - 48px), 1200px); max-width: 100%; margin-inline: auto; }
+
+@media (max-width: 992px) {
+  .footer-grid { grid-template-columns: 1fr; gap: 30px; }
+  .footer-brand-col { align-items: center; text-align: center; }
+  .footer-motto { margin-inline: auto; }
+  .social-links { justify-content: center; }
+}
+
+@media (max-width: 768px) {
+  .footer { padding-top: 32px; }
+  .footer-top { padding-bottom: 24px; }
+  .footer-grid { gap: 24px; }
+  .footer-info-grid { grid-template-columns: 1fr 1fr; gap: 22px; }
+  .footer-contact-section h4,
+  .footer-deped-section h4 { font-size: .78rem; }
+  .contact-list li { align-items: flex-start; }
+  .social-btn { min-height: 42px; }
+  .footer-bottom-inner { align-items: flex-start; }
+}
+
+@media (max-width: 600px) {
+  .footer .container { width: calc(100% - 30px); }
+  .footer-info-grid { grid-template-columns: 1fr; gap: 20px; }
+  .footer-contact-section,
+  .footer-deped-section { text-align: center; }
+  .contact-list { align-items: center; }
+  .contact-list li { justify-content: center; text-align: left; max-width: 100%; }
+  .deped-links { align-items: center; }
+  .deped-links a { min-height: 36px; display: inline-flex; align-items: center; }
+  .social-links { gap: 8px; }
+  .social-btn { padding: 8px 11px; font-size: .74rem; }
+  .footer-bottom-inner { flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+  .footer-compliance { justify-content: center; text-align: center; }
+}
+
+@media (max-width: 420px) {
+  .footer .container { width: calc(100% - 24px); }
+  .footer-logo { width: 62px; height: 62px; }
+  .footer-school-name { font-size: .9rem; }
+  .footer-motto { font-size: .76rem; }
+  .social-btn { width: 100%; justify-content: center; }
+  .social-links { width: 100%; }
+  .footer-bottom p { font-size: .68rem; }
+  .footer-compliance { gap: 6px; font-size: .76rem; }
+}
