@@ -2675,3 +2675,48 @@ table { max-width: 100%; border-collapse: collapse; }
   .btn-icon { min-height: 44px; }
   .card:hover, .official-card:hover, .subpage-card:hover { transform: none; }
 }
+/* ============================================================
+   MOBILE NAVBAR CLICK / BLUR FIX
+   The DOM uses .nav-bar, .nav-links.is-open, and .hamburger-btn.
+   Keep the backdrop below the complete navbar stacking context.
+   ============================================================ */
+@media (max-width: 768px) {
+  .site-header:has(.nav-links.is-open),
+  .nav-bar:has(.nav-links.is-open) {
+    position: relative;
+    z-index: 1003;
+    isolation: isolate;
+  }
+
+  .nav-bar:has(.nav-links.is-open) .nav-row {
+    position: relative;
+    z-index: 1004;
+  }
+
+  .nav-bar:has(.nav-links.is-open) .hamburger-btn,
+  .nav-bar:has(.nav-links.is-open) .nav-links,
+  .nav-bar:has(.nav-links.is-open) .nav-links a,
+  .nav-bar:has(.nav-links.is-open) .nav-links button,
+  .nav-bar:has(.nav-links.is-open) .nav-links .dropdown-item {
+    position: relative;
+    z-index: 1005;
+    pointer-events: auto;
+  }
+
+  .nav-bar:has(.nav-links.is-open) .nav-links {
+    isolation: isolate;
+  }
+
+  .mobile-backdrop {
+    z-index: 1001;
+    pointer-events: auto;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .mobile-backdrop[hidden],
+  .mobile-backdrop.is-hidden,
+  .mobile-backdrop:not(.is-visible) {
+    pointer-events: none;
+  }
+}
