@@ -277,3 +277,34 @@
   .footer-bottom p { font-size: .68rem; }
   .footer-compliance { gap: 6px; font-size: .76rem; }
 }
+
+/* ============================================================
+   MOBILE FOOTER LEFT ALIGNMENT
+   Applies only on mobile; desktop alignment remains unchanged.
+   ============================================================ */
+@media (max-width: 600px) {
+  .footer,
+  .footer-brand-col,
+  .footer-contact-section,
+  .footer-deped-section,
+  .footer-bottom-inner,
+  .footer-compliance { text-align: left; }
+
+  .footer-brand-col,
+  .social-links,
+  .contact-list,
+  .deped-links { align-items: flex-start; }
+
+  .footer-brand-col { justify-content: flex-start; }
+  .footer-motto { margin-left: 0; margin-right: 0; }
+  .social-links { justify-content: flex-start; }
+  .contact-list li { justify-content: flex-start; text-align: left; }
+  .deped-links { justify-content: flex-start; }
+  .footer-bottom-inner { align-items: flex-start; }
+  .footer-compliance { justify-content: flex-start; }
+}
+
+@media (max-width: 420px) {
+  .footer .container { text-align: left; }
+  .social-btn { justify-content: flex-start; }
+}
